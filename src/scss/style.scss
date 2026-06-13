@@ -1,0 +1,22 @@
+@use "@coreui/coreui/scss/coreui";
+@import "simplebar-react/dist/simplebar.min.css";
+
+.wrapper {
+  width: 100%;
+  padding-left: var(--cui-sidebar-occupy-start, 0);
+  transition: padding 0.15s;
+}
+
+.header {
+  min-height: 4rem;
+}
+
+.period-picker {
+  min-width: 14rem;
+}
+
+@media (max-width: 767.98px) {
+  .period-picker {
+    min-width: 100%;
+  }
+}

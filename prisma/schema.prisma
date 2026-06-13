@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Month {
+  id             String        @id
+  label          String
+  year           Int
+  month          Int
+  openingBalance Decimal       @default(0) @map("opening_balance") @db.Decimal(14, 2)
+  status         MonthStatus   @default(DRAFT)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  ledgerEntries  LedgerEntry[]
+  cashAdvances   CashAdvance[]
+
+  @@unique([year, month])
+  @@map("lkh_months")
+}
+
+model Category {
+  id        String        @id
+  name      String
+  kind      CategoryKind
+  color     String
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  entries   LedgerEntry[]
+
+  @@unique([name, kind])
+  @@map("lkh_categories")
+}
+
+model LedgerEntry {
+  id          String    @id
+  monthId     String    @map("month_id")
+  date        DateTime  @db.Date
+  proofNo     String?   @map("proof_no")
+  description String
+  categoryId  String    @map("category_id")
+  type        EntryType
+  amount      Decimal   @db.Decimal(14, 2)
+  proofImagePath String? @map("proof_image_path")
+  proofImageName String? @map("proof_image_name")
+  proofImageMime String? @map("proof_image_mime")
+  proofImageSize Int?    @map("proof_image_size")
+  source      String    @default("manual")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  month       Month     @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id])
+
+  @@index([monthId, date])
+  @@index([categoryId])
+  @@map("lkh_ledger_entries")
+}
+
+model CashAdvance {
+  id             String            @id
+  monthId        String            @map("month_id")
+  date           DateTime          @db.Date
+  person         String
+  description    String
+  amount         Decimal           @db.Decimal(14, 2)
+  status         CashAdvanceStatus @default(UNPAID)
+  proofImagePath String?           @map("proof_image_path")
+  proofImageName String?           @map("proof_image_name")
+  proofImageMime String?           @map("proof_image_mime")
+  proofImageSize Int?              @map("proof_image_size")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  month          Month             @relation(fields: [monthId], references: [id], onDelete: Cascade)
+
+  @@index([monthId, status])
+  @@map("lkh_cash_advances")
+}
+
+enum MonthStatus {
+  DRAFT
+  LOCKED
+  ARCHIVED
+}
+
+enum CategoryKind {
+  INCOME
+  EXPENSE
+}
+
+enum EntryType {
+  INCOME
+  EXPENSE
+}
+
+enum CashAdvanceStatus {
+  UNPAID
+  PAID
+}
