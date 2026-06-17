@@ -1,8 +1,8 @@
 import { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const controlClass = 'h-10 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:focus:border-emerald-400';
-const darkControlClass = 'h-10 w-full min-w-0 rounded-md border border-white/10 bg-slate-900 px-3 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20';
+const controlClass = 'h-9 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-slate-900 dark:text-white dark:focus:border-emerald-400';
+const darkControlClass = 'h-9 w-full min-w-0 rounded-md border border-white/10 bg-slate-900 px-3 text-xs font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20';
 
 type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   tone?: 'default' | 'dark';

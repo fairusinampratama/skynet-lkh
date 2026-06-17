@@ -1,8 +1,20 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Eye, Filter, ImagePlus, Pencil, Plus, Save, Table2, Trash2, X } from 'lucide-react';
-import { PrimaryButton, IconButton, MutedButton } from '../../components/ui/Button';
+import { Filter, Plus, Table2, X } from 'lucide-react';
+import { PrimaryButton, MutedButton } from '../../components/ui/Button';
 import { SelectField, TextField } from '../../components/ui/Fields';
 import { Panel } from '../../components/ui/Panel';
+import {
+  CategoryPill,
+  DataTableShell,
+  EmptyTableState,
+  InlineEditActions,
+  MobileEmptyState,
+  MobileStat,
+  MoneyCell,
+  ProofCell,
+  RowActions,
+  TablePagination
+} from '../../components/ui/DataTable';
 import { rupiah } from '../../lib/format';
 import { Category, EntryType, LedgerEntry, LedgerFilters, LedgerMeta } from '../../types';
 
@@ -62,9 +74,7 @@ export function LedgerView({
       <LedgerFiltersBar
         filters={filters}
         categories={filterCategories}
-        limit={meta.limit}
         onFiltersChange={onFiltersChange}
-        onLimitChange={onLimitChange}
       />
       <LedgerBrowser
         entries={entries}
@@ -78,6 +88,7 @@ export function LedgerView({
         onUploadProof={onUploadProof}
         onDeleteProof={onDeleteProof}
         onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
       />
     </Panel>
   );
@@ -99,7 +110,7 @@ function LedgerForm({
   onSave: () => void;
 }) {
   return (
-    <div className="grid min-w-0 gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-950/70 md:grid-cols-2 xl:grid-cols-[130px_110px_minmax(220px,1fr)_180px] 2xl:grid-cols-[130px_110px_minmax(180px,1fr)_180px_120px_145px_auto]">
+    <div className="grid min-w-0 gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-slate-950/70 md:grid-cols-2 xl:grid-cols-[130px_110px_minmax(220px,1fr)_180px] 2xl:grid-cols-[130px_110px_minmax(180px,1fr)_180px_120px_145px_auto]">
       <TextField disabled={locked} type="date" value={form.date} onChange={(e) => onChange({ ...form, date: e.target.value })} />
       <TextField disabled={locked} placeholder="No bukti" value={form.proofNo} onChange={(e) => onChange({ ...form, proofNo: e.target.value })} />
       <TextField disabled={locked} placeholder="Keterangan" value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
@@ -122,25 +133,34 @@ function LedgerForm({
 function LedgerFiltersBar({
   filters,
   categories,
-  limit,
-  onFiltersChange,
-  onLimitChange
+  onFiltersChange
 }: {
   filters: LedgerFilters;
   categories: Category[];
-  limit: number;
   onFiltersChange: (filters: LedgerFilters) => void;
-  onLimitChange: (limit: number) => void;
 }) {
   const update = (next: Partial<LedgerFilters>) => onFiltersChange({ ...filters, ...next });
+  const activeFilters = [
+    filters.search && 'Pencarian',
+    filters.dateFrom && 'Dari tanggal',
+    filters.dateTo && 'Sampai tanggal',
+    filters.categoryId && 'Kategori',
+    filters.type && 'Tipe',
+    filters.proof !== 'all' && 'Bukti'
+  ].filter(Boolean);
 
   return (
-    <div className="mt-4 rounded-md border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-slate-900/80">
-      <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-700 dark:text-slate-200">
-        <Filter size={16} />
-        Cari dan Filter
+    <div className="mt-4 rounded-md border border-slate-200 bg-white p-3 text-xs dark:border-white/10 dark:bg-slate-900/80">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs font-black text-slate-700 dark:text-slate-200">
+          <Filter size={14} />
+          Cari dan Filter
+        </div>
+        <div className="text-xs font-bold text-slate-400">
+          {activeFilters.length ? `${activeFilters.length} filter aktif` : 'Tidak ada filter aktif'}
+        </div>
       </div>
-      <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_150px_180px] 2xl:grid-cols-[minmax(220px,1.4fr)_150px_150px_180px_130px_145px_110px_auto]">
+      <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_150px_180px] 2xl:grid-cols-[minmax(220px,1.4fr)_150px_150px_180px_130px_145px_auto]">
         <TextField placeholder="Cari no bukti, keterangan, kategori" value={filters.search} onChange={(e) => update({ search: e.target.value })} />
         <TextField type="date" value={filters.dateFrom} onChange={(e) => update({ dateFrom: e.target.value })} />
         <TextField type="date" value={filters.dateTo} onChange={(e) => update({ dateTo: e.target.value })} />
@@ -157,11 +177,6 @@ function LedgerFiltersBar({
           <option value="all">Semua bukti</option>
           <option value="with">Ada bukti</option>
           <option value="without">Tanpa bukti</option>
-        </SelectField>
-        <SelectField value={String(limit)} onChange={(e) => onLimitChange(Number(e.target.value))}>
-          <option value="25">25 baris</option>
-          <option value="50">50 baris</option>
-          <option value="100">100 baris</option>
         </SelectField>
         <MutedButton className="w-full xl:w-auto" onClick={() => onFiltersChange(emptyFilters)}>
           Reset
@@ -182,7 +197,8 @@ function LedgerBrowser({
   onDelete,
   onUploadProof,
   onDeleteProof,
-  onPageChange
+  onPageChange,
+  onLimitChange
 }: {
   entries: LedgerEntry[];
   categories: Category[];
@@ -195,6 +211,7 @@ function LedgerBrowser({
   onUploadProof: (id: string, file: File) => Promise<void>;
   onDeleteProof: (id: string) => Promise<void>;
   onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
 }) {
   const [editingId, setEditingId] = useState('');
   const [editForm, setEditForm] = useState<LedgerFormState | null>(null);
@@ -231,19 +248,18 @@ function LedgerBrowser({
     <>
       {loading && <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">Memuat data transaksi...</div>}
 
-      <div className="mt-4 hidden min-w-0 overflow-x-auto overscroll-x-contain rounded-md border border-slate-200 dark:border-white/10 md:block">
-        <table className="w-full min-w-[1040px] table-fixed text-left text-sm">
-          <thead className="sticky top-0 z-10 bg-slate-100 text-[11px] uppercase text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+      <DataTableShell>
+        <table className="w-full min-w-[1160px] table-fixed text-left text-xs">
+          <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 text-[10px] uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
             <tr>
-              <th className="w-[92px] px-3 py-3">Tanggal</th>
-              <th className="w-[50px] px-3 py-3">No</th>
-              <th className="px-3 py-3">Keterangan</th>
-              <th className="w-[120px] px-3 py-3">Kategori</th>
-              <th className="w-[105px] px-3 py-3 text-right">Masuk</th>
-              <th className="w-[105px] px-3 py-3 text-right">Keluar</th>
-              <th className="w-[115px] px-3 py-3 text-right">Saldo</th>
-              <th className="w-[100px] px-3 py-3">Bukti</th>
-              <th className="sticky right-0 z-20 w-[86px] bg-slate-100 px-3 py-3 text-right shadow-[-8px_0_12px_-12px_rgba(15,23,42,0.75)] dark:bg-slate-950">Aksi</th>
+              <th className="w-[105px] px-3 py-2.5">Tanggal</th>
+              <th className="w-[92px] px-3 py-2.5">No Bukti</th>
+              <th className="w-[260px] px-3 py-2.5">Keterangan</th>
+              <th className="w-[150px] px-3 py-2.5">Kategori</th>
+              <th className="w-[128px] px-3 py-2.5 text-right">Nominal</th>
+              <th className="w-[132px] px-3 py-2.5 text-right">Saldo</th>
+              <th className="w-[170px] px-3 py-2.5">Bukti</th>
+              <th className="sticky right-0 z-20 w-[96px] bg-slate-100 px-3 py-2.5 text-right shadow-[-10px_0_16px_-16px_rgba(15,23,42,0.9)] dark:bg-slate-950">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
@@ -265,10 +281,10 @@ function LedgerBrowser({
                 onDeleteProof={onDeleteProof}
               />
             ))}
-            {!entries.length && <tr><td colSpan={9} className="px-3 py-12 text-center font-bold text-slate-400">Tidak ada transaksi sesuai filter.</td></tr>}
+            {!entries.length && <EmptyTableState colSpan={8} message="Tidak ada transaksi sesuai filter." />}
           </tbody>
         </table>
-      </div>
+      </DataTableShell>
 
       <div className="mt-4 grid gap-3 md:hidden">
         {entries.map((entry) => (
@@ -289,10 +305,10 @@ function LedgerBrowser({
             onDeleteProof={onDeleteProof}
           />
         ))}
-        {!entries.length && <div className="rounded-md border border-dashed border-slate-300 px-4 py-8 text-center text-sm font-bold text-slate-400 dark:border-white/10">Tidak ada transaksi sesuai filter.</div>}
+        {!entries.length && <MobileEmptyState message="Tidak ada transaksi sesuai filter." />}
       </div>
 
-      <Pagination meta={meta} onPageChange={onPageChange} disabled={loading} />
+      <TablePagination meta={meta} onPageChange={onPageChange} onLimitChange={onLimitChange} disabled={loading} itemLabel="transaksi" />
       {preview && <ProofPreview entry={preview} onClose={() => setPreview(null)} />}
     </>
   );
@@ -330,39 +346,46 @@ function LedgerTableRow({
   const isEditing = Boolean(editForm);
 
   return (
-    <tr className="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/70">
-      <td className="px-3 py-3 align-top font-mono text-xs text-slate-500 dark:text-slate-400">
+    <tr className="bg-white transition hover:bg-emerald-50/50 dark:bg-slate-900 dark:hover:bg-emerald-500/5">
+      <td className="px-3 py-2.5 align-top font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
         {editForm ? <TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} /> : entry.date}
       </td>
-      <td className="px-3 py-3 align-top font-bold">
-        {editForm ? <TextField value={editForm.proofNo} onChange={(e) => onEditFormChange({ ...editForm, proofNo: e.target.value })} /> : entry.proofNo}
+      <td className="px-3 py-2.5 align-top font-mono text-[11px] font-black text-slate-600 dark:text-slate-300">
+        {editForm ? <TextField value={editForm.proofNo} onChange={(e) => onEditFormChange({ ...editForm, proofNo: e.target.value })} /> : entry.proofNo || '-'}
       </td>
-      <td className="break-words px-3 py-3 align-top font-semibold">
+      <td className="break-words px-3 py-2.5 align-top font-semibold leading-snug">
         {editForm ? <TextField value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} /> : entry.description}
       </td>
-      <td className="px-3 py-3 align-top">
+      <td className="px-3 py-2.5 align-top">
         {editForm ? (
           <SelectField value={editForm.categoryId} onChange={(e) => onEditFormChange({ ...editForm, categoryId: e.target.value })}>
             {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </SelectField>
         ) : <CategoryBadge entry={entry} />}
       </td>
-      <td className="px-3 py-3 align-top text-right font-mono text-emerald-600 dark:text-emerald-300">
+      <td className="px-3 py-2.5 align-top text-right">
         {editForm ? (
-          <SelectField value={editForm.type} onChange={(e) => onEditFormChange({ ...editForm, type: e.target.value as EntryType })}>
-            <option value="EXPENSE">Keluar</option>
-            <option value="INCOME">Masuk</option>
-          </SelectField>
-        ) : entry.type === 'INCOME' ? rupiah(entry.amount) : ''}
+          <div className="grid gap-1.5">
+            <SelectField value={editForm.type} onChange={(e) => onEditFormChange({ ...editForm, type: e.target.value as EntryType })}>
+              <option value="EXPENSE">Keluar</option>
+              <option value="INCOME">Masuk</option>
+            </SelectField>
+            <TextField value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-end gap-0.5">
+            <MoneyCell value={rupiah(entry.amount)} tone={entry.type === 'INCOME' ? 'income' : 'expense'} />
+            <span className={`rounded px-1.5 py-0.5 text-[10px] font-black ${entry.type === 'INCOME' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'}`}>
+              {entry.type === 'INCOME' ? 'Masuk' : 'Keluar'}
+            </span>
+          </div>
+        )}
       </td>
-      <td className="px-3 py-3 align-top text-right font-mono text-rose-600 dark:text-rose-300">
-        {editForm ? <TextField value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} /> : entry.type === 'EXPENSE' ? rupiah(entry.amount) : ''}
+      <td className="px-3 py-2.5 align-top text-right"><MoneyCell value={rupiah(entry.runningBalance)} /></td>
+      <td className="px-3 py-2.5 align-top">
+        <ProofCell id={entry.id} proofImageUrl={entry.proofImageUrl} proofImageName={entry.proofImageName} alt="Bukti transaksi" locked={locked || busy} onPreview={() => onPreview(entry)} onUpload={onUploadProof} onDeleteProof={onDeleteProof} />
       </td>
-      <td className="px-3 py-3 align-top text-right font-mono font-black">{rupiah(entry.runningBalance)}</td>
-      <td className="px-3 py-3 align-top">
-        <ProofActions entry={entry} locked={locked || busy} onPreview={onPreview} onUpload={onUploadProof} onDeleteProof={onDeleteProof} />
-      </td>
-      <td className="sticky right-0 bg-white px-3 py-3 align-top shadow-[-8px_0_12px_-12px_rgba(15,23,42,0.75)] dark:bg-slate-900">
+      <td className="sticky right-0 bg-white px-3 py-2.5 align-top shadow-[-10px_0_16px_-16px_rgba(15,23,42,0.9)] dark:bg-slate-900">
         <RowActions
           isEditing={isEditing}
           locked={locked}
@@ -424,10 +447,7 @@ function LedgerMobileCard({
             <TextField placeholder="Nominal" value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} />
           </div>
         </div>
-        <div className="mt-3 flex justify-end gap-2">
-          <MutedButton disabled={busy} onClick={onCancelEdit}><X size={15} /> Batal</MutedButton>
-          <PrimaryButton className="w-auto" disabled={busy} onClick={onSaveEdit}><Save size={15} /> Simpan</PrimaryButton>
-        </div>
+        <InlineEditActions busy={busy} onCancel={onCancelEdit} onSave={onSaveEdit} />
       </div>
     );
   }
@@ -451,145 +471,22 @@ function LedgerMobileCard({
         />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <AmountBox label={entry.type === 'INCOME' ? 'Masuk' : 'Keluar'} value={rupiah(entry.amount)} tone={entry.type === 'INCOME' ? 'income' : 'expense'} />
-        <AmountBox label="Saldo" value={rupiah(entry.runningBalance)} tone="balance" />
+        <MobileStat label="Nominal">
+          <MoneyCell value={rupiah(entry.amount)} tone={entry.type === 'INCOME' ? 'income' : 'expense'} />
+        </MobileStat>
+        <MobileStat label="Saldo">
+          <MoneyCell value={rupiah(entry.runningBalance)} />
+        </MobileStat>
       </div>
       <div className="mt-3 border-t border-slate-100 pt-3 dark:border-white/10">
-        <ProofActions entry={entry} locked={locked || busy} onPreview={onPreview} onUpload={onUploadProof} onDeleteProof={onDeleteProof} />
+        <ProofCell id={entry.id} proofImageUrl={entry.proofImageUrl} proofImageName={entry.proofImageName} alt="Bukti transaksi" locked={locked || busy} onPreview={() => onPreview(entry)} onUpload={onUploadProof} onDeleteProof={onDeleteProof} />
       </div>
-    </div>
-  );
-}
-
-function RowActions({
-  isEditing,
-  locked,
-  busy,
-  onStartEdit,
-  onSaveEdit,
-  onCancelEdit,
-  onDelete
-}: {
-  isEditing: boolean;
-  locked: boolean;
-  busy: boolean;
-  onStartEdit: () => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="flex justify-end gap-2">
-      {isEditing ? (
-        <>
-          <IconButton disabled={busy} onClick={onSaveEdit}><Save size={15} /></IconButton>
-          <IconButton disabled={busy} onClick={onCancelEdit}><X size={15} /></IconButton>
-        </>
-      ) : (
-        <>
-          <IconButton disabled={locked || busy} onClick={onStartEdit}><Pencil size={15} /></IconButton>
-          <IconButton disabled={locked || busy} onClick={onDelete}><Trash2 size={15} /></IconButton>
-        </>
-      )}
     </div>
   );
 }
 
 function CategoryBadge({ entry }: { entry: LedgerEntry }) {
-  return <span className="rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">{entry.category.name}</span>;
-}
-
-function AmountBox({ label, value, tone }: { label: string; value: string; tone: 'income' | 'expense' | 'balance' }) {
-  const toneClass = tone === 'income' ? 'text-emerald-600 dark:text-emerald-300' : tone === 'expense' ? 'text-rose-600 dark:text-rose-300' : 'text-slate-900 dark:text-slate-100';
-  return (
-    <div className="rounded-md bg-slate-50 p-2 dark:bg-slate-950/70">
-      <div className="text-[11px] font-black uppercase text-slate-400">{label}</div>
-      <div className={`mt-1 font-mono text-sm font-black ${toneClass}`}>{value}</div>
-    </div>
-  );
-}
-
-function Pagination({ meta, disabled, onPageChange }: { meta: LedgerMeta; disabled: boolean; onPageChange: (page: number) => void }) {
-  const start = meta.total ? (meta.page - 1) * meta.limit + 1 : 0;
-  const end = meta.total ? Math.min(meta.page * meta.limit, meta.total) : 0;
-  const pages = getVisiblePages(meta.page, meta.totalPages);
-
-  return (
-    <div className="mt-4 flex flex-col gap-3 rounded-md border border-slate-200 bg-white px-3 py-3 text-sm dark:border-white/10 dark:bg-slate-900 md:flex-row md:items-center md:justify-between">
-      <div className="font-bold text-slate-500 dark:text-slate-400">
-        Menampilkan {start}-{end} dari {meta.total} transaksi
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <MutedButton disabled={disabled || meta.page <= 1} onClick={() => onPageChange(meta.page - 1)}>
-          <ChevronLeft size={16} />
-          Sebelumnya
-        </MutedButton>
-        {pages.map((page) => (
-          <button
-            key={page}
-            disabled={disabled || page === meta.page}
-            onClick={() => onPageChange(page)}
-            className={`h-10 min-w-10 rounded-md border px-3 text-sm font-black transition disabled:cursor-default ${page === meta.page ? 'border-emerald-500 bg-emerald-500 text-slate-950' : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-100 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800'}`}
-          >
-            {page}
-          </button>
-        ))}
-        <MutedButton disabled={disabled || meta.page >= meta.totalPages} onClick={() => onPageChange(meta.page + 1)}>
-          Berikutnya
-          <ChevronRight size={16} />
-        </MutedButton>
-      </div>
-    </div>
-  );
-}
-
-function getVisiblePages(current: number, total: number) {
-  const pages = new Set<number>([1, total, current - 1, current, current + 1]);
-  return [...pages].filter((page) => page >= 1 && page <= total).sort((a, b) => a - b);
-}
-
-function ProofActions({
-  entry,
-  locked,
-  onPreview,
-  onUpload,
-  onDeleteProof
-}: {
-  entry: LedgerEntry;
-  locked: boolean;
-  onPreview: (entry: LedgerEntry) => void;
-  onUpload: (id: string, file: File) => Promise<void>;
-  onDeleteProof: (id: string) => Promise<void>;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {entry.proofImageUrl ? (
-        <>
-          <button onClick={() => onPreview(entry)} className="inline-flex h-9 w-12 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-slate-950">
-            <img src={entry.proofImageUrl} alt={entry.proofImageName || 'Bukti transaksi'} className="h-full w-full object-cover" />
-          </button>
-          <IconButton onClick={() => onPreview(entry)}><Eye size={15} /></IconButton>
-          <IconButton disabled={locked} onClick={() => onDeleteProof(entry.id)}><X size={15} /></IconButton>
-        </>
-      ) : (
-        <span className="text-xs font-bold text-slate-400">Belum ada</span>
-      )}
-      <label className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-white/10 dark:text-slate-400 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300 ${locked ? 'pointer-events-none opacity-30' : 'cursor-pointer'}`}>
-        <ImagePlus size={15} />
-        <input
-          disabled={locked}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) onUpload(entry.id, file);
-            event.target.value = '';
-          }}
-        />
-      </label>
-    </div>
-  );
+  return <CategoryPill>{entry.category.name}</CategoryPill>;
 }
 
 function ProofPreview({ entry, onClose }: { entry: LedgerEntry; onClose: () => void }) {

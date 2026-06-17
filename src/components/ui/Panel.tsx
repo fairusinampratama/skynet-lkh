@@ -7,8 +7,8 @@ export function Panel({ title, subtitle, icon, children }: { title: string; subt
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-950 text-white dark:bg-white dark:text-slate-950">{icon}</div>
           <div className="min-w-0">
-            <h3 className="font-black">{title}</h3>
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">{subtitle}</p>
+            <h3 className="font-black leading-tight" style={{ fontSize: '1rem' }}>{title}</h3>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{subtitle}</p>
           </div>
         </div>
       </div>

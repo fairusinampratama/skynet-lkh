@@ -18,12 +18,14 @@ export function AppSidebar({
   visible,
   unfoldable,
   onVisibleChange,
-  onUnfoldableChange
+  onUnfoldableChange,
+  onNavigate
 }: {
   visible: boolean;
   unfoldable: boolean;
   onVisibleChange: (visible: boolean) => void;
   onUnfoldableChange: (value: boolean | ((current: boolean) => boolean)) => void;
+  onNavigate: () => void;
 }) {
   const { darkMode } = useLkh();
 
@@ -49,7 +51,7 @@ export function AppSidebar({
       <CSidebarNav>
         {navigation.map((item) => (
           <CNavItem key={item.to}>
-            <NavLink className="nav-link" to={item.to}>
+            <NavLink className="nav-link" to={item.to} onClick={onNavigate}>
               {item.icon}
               {item.name}
             </NavLink>

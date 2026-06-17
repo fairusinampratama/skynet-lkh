@@ -69,6 +69,7 @@
     @apply font-sans antialiased transition-colors duration-300;
     background: var(--lkh-bg);
     color: var(--lkh-text);
+    font-size: 13px;
   }
 
   ::selection {
@@ -100,6 +101,18 @@
     background-color: var(--lkh-surface);
     border-color: var(--lkh-border);
     color: var(--lkh-text);
+    font-size: .8125rem;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-size: .75rem;
+  }
+
+  input::placeholder {
+    font-size: .75rem;
   }
 
   .form-control:focus,
@@ -117,6 +130,61 @@
   .border-top,
   .border-end {
     border-color: var(--lkh-border) !important;
+  }
+
+  .header {
+    font-size: .8125rem;
+  }
+
+  .header .h4,
+  .header h1 {
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+
+  .badge {
+    font-size: .625rem;
+  }
+
+  .btn {
+    font-size: .75rem;
+  }
+
+  .sidebar {
+    font-size: .8125rem;
+  }
+
+  .sidebar-brand {
+    font-size: .875rem;
+  }
+
+  .sidebar .nav-link {
+    min-height: 2.5rem;
+    font-size: .8125rem;
+    font-weight: 700;
+  }
+
+  .sidebar .nav-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .alert {
+    font-size: .8125rem;
+  }
+
+  .alert .btn-close {
+    opacity: .75;
+    transform: scale(.8);
+  }
+
+  .alert .btn-close:hover,
+  .alert .btn-close:focus {
+    opacity: 1;
+  }
+
+  .dark .alert .btn-close {
+    filter: invert(1) grayscale(100%) brightness(180%);
   }
 }
 

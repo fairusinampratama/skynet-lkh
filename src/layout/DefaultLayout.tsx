@@ -4,7 +4,7 @@ import { AppHeader } from '../components/coreui/AppHeader';
 import { AppSidebar } from '../components/coreui/AppSidebar';
 
 export function DefaultLayout() {
-  const [sidebarShow, setSidebarShow] = useState(true);
+  const [sidebarShow, setSidebarShow] = useState(() => window.matchMedia('(min-width: 992px)').matches);
   const [sidebarUnfoldable, setSidebarUnfoldable] = useState(() => localStorage.getItem('lkh_sidebar') === 'collapsed');
 
   useEffect(() => {
@@ -18,6 +18,9 @@ export function DefaultLayout() {
         unfoldable={sidebarUnfoldable}
         onVisibleChange={setSidebarShow}
         onUnfoldableChange={setSidebarUnfoldable}
+        onNavigate={() => {
+          if (!window.matchMedia('(min-width: 992px)').matches) setSidebarShow(false);
+        }}
       />
       <div className="wrapper d-flex flex-column min-vh-100">
         <AppHeader onToggleSidebar={() => setSidebarShow((visible) => !visible)} />
