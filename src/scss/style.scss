@@ -1,4 +1,62 @@
-@use "@coreui/coreui/scss/coreui";
+$primary: #047857;
+$secondary: #64748b;
+$success: #059669;
+$info: #0f766e;
+$warning: #b45309;
+$danger: #be123c;
+$light: #f8fafc;
+$dark: #0f172a;
+
+$body-bg: #f6f8f7;
+$body-color: #1f2937;
+$body-secondary-color: #64748b;
+$body-tertiary-color: #94a3b8;
+$body-tertiary-bg: #edf2ef;
+$body-emphasis-color: #0f172a;
+$border-color: #d9e2dc;
+$border-color-translucent: rgba(15, 23, 42, .12);
+$link-color: $primary;
+
+$body-bg-dark: #0b1120;
+$body-color-dark: #e5e7eb;
+$body-secondary-color-dark: #9ca3af;
+$body-tertiary-color-dark: #6b7280;
+$body-secondary-bg-dark: #111827;
+$body-tertiary-bg-dark: #172033;
+$body-emphasis-color-dark: #f9fafb;
+$border-color-dark: rgba(229, 231, 235, .14);
+$border-color-translucent-dark: rgba(229, 231, 235, .14);
+$link-color-dark: #34d399;
+
+@use "@coreui/coreui/scss/coreui" with (
+  $primary: $primary,
+  $secondary: $secondary,
+  $success: $success,
+  $info: $info,
+  $warning: $warning,
+  $danger: $danger,
+  $light: $light,
+  $dark: $dark,
+  $body-bg: $body-bg,
+  $body-color: $body-color,
+  $body-secondary-color: $body-secondary-color,
+  $body-tertiary-color: $body-tertiary-color,
+  $body-tertiary-bg: $body-tertiary-bg,
+  $body-emphasis-color: $body-emphasis-color,
+  $border-color: $border-color,
+  $border-color-translucent: $border-color-translucent,
+  $link-color: $link-color,
+  $body-bg-dark: $body-bg-dark,
+  $body-color-dark: $body-color-dark,
+  $body-secondary-color-dark: $body-secondary-color-dark,
+  $body-tertiary-color-dark: $body-tertiary-color-dark,
+  $body-secondary-bg-dark: $body-secondary-bg-dark,
+  $body-tertiary-bg-dark: $body-tertiary-bg-dark,
+  $body-emphasis-color-dark: $body-emphasis-color-dark,
+  $border-color-dark: $border-color-dark,
+  $border-color-translucent-dark: $border-color-translucent-dark,
+  $link-color-dark: $link-color-dark
+);
 @import "simplebar-react/dist/simplebar.min.css";
 
 .wrapper {
@@ -9,10 +67,35 @@
 
 .header {
   min-height: 4rem;
+  background: var(--lkh-surface);
 }
 
 .period-picker {
   min-width: 14rem;
+}
+
+.sidebar {
+  --cui-sidebar-bg: var(--lkh-sidebar-bg);
+  --cui-sidebar-color: var(--lkh-sidebar-color);
+  --cui-sidebar-brand-color: var(--lkh-sidebar-color);
+  --cui-sidebar-brand-bg: var(--lkh-sidebar-brand-bg);
+  --cui-sidebar-nav-link-color: var(--lkh-sidebar-link);
+  --cui-sidebar-nav-link-icon-color: var(--lkh-sidebar-muted);
+  --cui-sidebar-nav-link-hover-color: var(--lkh-sidebar-link-hover);
+  --cui-sidebar-nav-link-hover-bg: var(--lkh-sidebar-link-hover-bg);
+  --cui-sidebar-nav-link-hover-icon-color: var(--lkh-sidebar-link-hover);
+  --cui-sidebar-nav-link-active-color: var(--lkh-sidebar-link-active);
+  --cui-sidebar-nav-link-active-bg: var(--lkh-sidebar-link-active-bg);
+  --cui-sidebar-nav-link-active-icon-color: var(--lkh-sidebar-link-active);
+  --cui-sidebar-toggler-color: var(--lkh-sidebar-muted);
+  --cui-sidebar-toggler-hover-color: var(--lkh-sidebar-link-hover);
+  --cui-sidebar-toggler-focus-color: var(--lkh-sidebar-link-hover);
+  border-color: var(--lkh-border) !important;
+}
+
+.sidebar-brand .brand-mark {
+  background: var(--lkh-primary);
+  color: #ffffff;
 }
 
 @media (max-width: 767.98px) {

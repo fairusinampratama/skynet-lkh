@@ -9,7 +9,171 @@
 }
 
 @layer base {
-  body {
-    @apply bg-slate-50 font-sans text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
+  :root {
+    color-scheme: light;
+    --lkh-bg: #f6f8f7;
+    --lkh-surface: #ffffff;
+    --lkh-surface-muted: #f1f5f2;
+    --lkh-surface-raised: #ffffff;
+    --lkh-border: #d9e2dc;
+    --lkh-border-strong: #b9c8bf;
+    --lkh-text: #1f2937;
+    --lkh-text-strong: #0f172a;
+    --lkh-muted: #64748b;
+    --lkh-primary: #047857;
+    --lkh-primary-hover: #059669;
+    --lkh-income: #059669;
+    --lkh-expense: #be123c;
+    --lkh-warning: #b45309;
+    --lkh-info: #0f766e;
+    --lkh-sidebar-bg: #ffffff;
+    --lkh-sidebar-color: #1f2937;
+    --lkh-sidebar-muted: #64748b;
+    --lkh-sidebar-brand-bg: #f1f5f2;
+    --lkh-sidebar-link: #475569;
+    --lkh-sidebar-link-hover: #0f172a;
+    --lkh-sidebar-link-hover-bg: #ecfdf5;
+    --lkh-sidebar-link-active: #ffffff;
+    --lkh-sidebar-link-active-bg: #047857;
   }
+
+  .dark {
+    color-scheme: dark;
+    --lkh-bg: #0b1120;
+    --lkh-surface: #111827;
+    --lkh-surface-muted: #172033;
+    --lkh-surface-raised: #182235;
+    --lkh-border: rgba(229, 231, 235, .14);
+    --lkh-border-strong: rgba(229, 231, 235, .22);
+    --lkh-text: #e5e7eb;
+    --lkh-text-strong: #f9fafb;
+    --lkh-muted: #9ca3af;
+    --lkh-primary: #34d399;
+    --lkh-primary-hover: #6ee7b7;
+    --lkh-income: #34d399;
+    --lkh-expense: #fb7185;
+    --lkh-warning: #fbbf24;
+    --lkh-info: #5eead4;
+    --lkh-sidebar-bg: #0f172a;
+    --lkh-sidebar-color: #e5e7eb;
+    --lkh-sidebar-muted: #94a3b8;
+    --lkh-sidebar-brand-bg: rgba(255, 255, 255, .06);
+    --lkh-sidebar-link: #cbd5e1;
+    --lkh-sidebar-link-hover: #f8fafc;
+    --lkh-sidebar-link-hover-bg: rgba(255, 255, 255, .08);
+    --lkh-sidebar-link-active: #052e2b;
+    --lkh-sidebar-link-active-bg: #34d399;
+  }
+
+  body {
+    @apply font-sans antialiased transition-colors duration-300;
+    background: var(--lkh-bg);
+    color: var(--lkh-text);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--lkh-primary) 24%, transparent);
+  }
+}
+
+@layer components {
+  .card,
+  .modal-content,
+  .dropdown-menu,
+  .list-group-item {
+    background-color: var(--lkh-surface);
+    border-color: var(--lkh-border);
+    color: var(--lkh-text);
+  }
+
+  .table {
+    --cui-table-color: var(--lkh-text);
+    --cui-table-bg: var(--lkh-surface);
+    --cui-table-border-color: var(--lkh-border);
+    --cui-table-striped-bg: var(--lkh-surface-muted);
+    --cui-table-hover-bg: color-mix(in srgb, var(--lkh-primary) 8%, transparent);
+  }
+
+  .form-control,
+  .form-select,
+  .input-group-text {
+    background-color: var(--lkh-surface);
+    border-color: var(--lkh-border);
+    color: var(--lkh-text);
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--lkh-primary);
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--lkh-primary) 20%, transparent);
+  }
+
+  .text-body-secondary {
+    color: var(--lkh-muted) !important;
+  }
+
+  .border,
+  .border-bottom,
+  .border-top,
+  .border-end {
+    border-color: var(--lkh-border) !important;
+  }
+}
+
+.dark .bg-white,
+.dark .bg-slate-50 {
+  background-color: var(--lkh-surface) !important;
+}
+
+.dark .bg-slate-100,
+.dark .bg-slate-200 {
+  background-color: var(--lkh-surface-muted) !important;
+}
+
+.dark .bg-slate-900,
+.dark .bg-slate-950 {
+  background-color: var(--lkh-surface) !important;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-white\/10 {
+  border-color: var(--lkh-border) !important;
+}
+
+.dark .text-slate-950,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-white {
+  color: var(--lkh-text-strong) !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-slate-400,
+.dark .text-slate-300 {
+  color: var(--lkh-muted) !important;
+}
+
+.dark .text-emerald-600,
+.dark .text-emerald-300 {
+  color: var(--lkh-income) !important;
+}
+
+.dark .text-rose-600,
+.dark .text-rose-300 {
+  color: var(--lkh-expense) !important;
+}
+
+.dark .text-amber-700,
+.dark .text-amber-300 {
+  color: var(--lkh-warning) !important;
+}
+
+.dark .shadow-sm,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .22) !important;
 }

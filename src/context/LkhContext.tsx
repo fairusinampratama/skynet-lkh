@@ -97,6 +97,13 @@ type LkhContextValue = {
 
 const LkhContext = createContext<LkhContextValue | null>(null);
 
+const getInitialDarkMode = () => {
+  const savedTheme = localStorage.getItem('lkh_theme');
+  if (savedTheme === 'dark') return true;
+  if (savedTheme === 'light') return false;
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+};
+
 export function LkhProvider({ children }: { children: ReactNode }) {
   const [months, setMonths] = useState<Month[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -114,7 +121,7 @@ export function LkhProvider({ children }: { children: ReactNode }) {
   const [kasbonLoading, setKasbonLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('lkh_theme') !== 'light');
+  const [darkMode, setDarkMode] = useState(getInitialDarkMode);
   const [periodForm, setPeriodForm] = useState<PeriodState>({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
