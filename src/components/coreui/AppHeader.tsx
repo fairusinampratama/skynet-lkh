@@ -54,7 +54,7 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
   return (
     <CHeader position="sticky" className="mb-4 border-bottom" ref={headerRef}>
       <CContainer fluid className="gap-3 py-3">
-        <CHeaderToggler className="d-lg-none" onClick={onToggleSidebar}>
+        <CHeaderToggler onClick={onToggleSidebar} title="Toggle sidebar">
           <CIcon icon={cilMenu} size="lg" />
         </CHeaderToggler>
 

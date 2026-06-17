@@ -374,22 +374,12 @@ export function LkhProvider({ children }: { children: ReactNode }) {
 
   const exportMonth = () => run(async () => {
     if (!activeMonthId) throw new Error('Pilih bulan LKH terlebih dahulu.');
-    const response = await fetch(`/api/months/${activeMonthId}/export.xlsx`);
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || response.statusText || 'Export Excel gagal.');
-    }
-    const blob = await response.blob();
-    const contentDisposition = response.headers.get('Content-Disposition') || '';
-    const fileName = contentDisposition.match(/filename="([^"]+)"/)?.[1] || `LKH-SkyNet-${activeMonthId}.xlsx`;
-    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
+    link.href = `/api/months/${activeMonthId}/export.xlsx`;
+    link.download = '';
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
   }, 'Export Excel selesai.');
 
   const value: LkhContextValue = {

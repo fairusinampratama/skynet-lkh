@@ -28,6 +28,10 @@ export function AppSidebar({
   onNavigate: () => void;
 }) {
   const { darkMode } = useLkh();
+  const closeSidebar = () => {
+    onUnfoldableChange(false);
+    onVisibleChange(false);
+  };
 
   return (
     <CSidebar
@@ -45,7 +49,7 @@ export function AppSidebar({
           </span>
           <span className="sidebar-brand-full fw-bold">LKH SkyNet</span>
         </CSidebarBrand>
-        <CCloseButton className="d-lg-none" dark={darkMode} onClick={() => onVisibleChange(false)} />
+        <CCloseButton className="d-lg-none" dark={darkMode} onClick={closeSidebar} />
       </CSidebarHeader>
 
       <CSidebarNav>
@@ -60,7 +64,7 @@ export function AppSidebar({
       </CSidebarNav>
 
       <CSidebarFooter className="border-top d-none d-lg-flex">
-        <CSidebarToggler onClick={() => onUnfoldableChange((value) => !value)} />
+        <CSidebarToggler onClick={closeSidebar} />
       </CSidebarFooter>
     </CSidebar>
   );
