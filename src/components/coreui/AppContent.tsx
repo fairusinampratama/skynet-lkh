@@ -5,11 +5,11 @@ import { routes } from '../../routes';
 import { useLkh } from '../../context/LkhContext';
 
 export function AppContent() {
-  const { message } = useLkh();
+  const { message, clearMessage } = useLkh();
 
   return (
     <CContainer fluid className="px-3 px-xl-4">
-      {message && <CAlert color="info" className="mb-3 fw-semibold">{message}</CAlert>}
+      {message && <CAlert color="info" className="mb-3 fw-semibold" dismissible onClose={clearMessage}>{message}</CAlert>}
       <Suspense fallback={<div className="d-flex justify-content-center py-5"><CSpinner color="primary" /></div>}>
         <Routes>
           {routes.map((route) => (

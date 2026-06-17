@@ -69,6 +69,7 @@ type LkhContextValue = {
   message: string;
   darkMode: boolean;
   locked: boolean;
+  clearMessage: () => void;
   setEntryForm: (value: LedgerFormState) => void;
   setKasbonForm: (value: KasbonFormState) => void;
   setOpeningBalance: (value: string) => void;
@@ -395,6 +396,7 @@ export function LkhProvider({ children }: { children: ReactNode }) {
     message,
     darkMode,
     locked,
+    clearMessage: () => setMessage(''),
     setEntryForm,
     setKasbonForm,
     setOpeningBalance: (openingBalance) => setPeriodForm((current) => ({ ...current, openingBalance })),
