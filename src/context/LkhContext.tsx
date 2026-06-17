@@ -77,6 +77,7 @@ type LkhContextValue = {
   changePeriod: (period: { year: number; month: number }) => void;
   createMonth: () => void;
   toggleLock: () => void;
+  exportMonth: () => void;
   saveEntry: () => void;
   updateEntry: (id: string, form: LedgerFormState) => Promise<void>;
   deleteEntry: (id: string) => void;
@@ -371,6 +372,26 @@ export function LkhProvider({ children }: { children: ReactNode }) {
     await loadBootstrap();
   }, month?.status === 'DRAFT' ? 'Bulan dikunci.' : 'Bulan dibuka kembali.');
 
+  const exportMonth = () => run(async () => {
+    if (!activeMonthId) throw new Error('Pilih bulan LKH terlebih dahulu.');
+    const response = await fetch(`/api/months/${activeMonthId}/export.xlsx`);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || response.statusText || 'Export Excel gagal.');
+    }
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get('Content-Disposition') || '';
+    const fileName = contentDisposition.match(/filename="([^"]+)"/)?.[1] || `LKH-SkyNet-${activeMonthId}.xlsx`;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 'Export Excel selesai.');
+
   const value: LkhContextValue = {
     months,
     categories,
@@ -404,6 +425,7 @@ export function LkhProvider({ children }: { children: ReactNode }) {
     changePeriod,
     createMonth,
     toggleLock,
+    exportMonth,
     saveEntry,
     updateEntry,
     deleteEntry,

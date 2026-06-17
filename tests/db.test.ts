@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import ExcelJS from 'exceljs';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../server';
@@ -29,6 +30,12 @@ async function createJune(openingBalance = 1596761) {
     .send({ year: 2026, month: 6, openingBalance })
     .expect(200);
   return res.body.month;
+}
+
+function parseBinaryResponse(res: any, callback: (error: Error | null, body?: Buffer) => void) {
+  const chunks: Buffer[] = [];
+  res.on('data', (chunk: Buffer) => chunks.push(chunk));
+  res.on('end', () => callback(null, Buffer.concat(chunks)));
 }
 
 beforeAll(async () => {
@@ -102,6 +109,40 @@ describe('LKH API and DB integration', () => {
     expect(res.body.ledger).toBeUndefined();
     expect(res.body.cashAdvances).toEqual([]);
     expect(res.body.summary).toMatchObject({ ledgerCount: 1, totalExpense: 250, closingBalance: 750 });
+  });
+
+  it('exports a formatted full month Excel workbook', async () => {
+    const month = await createJune(1000);
+    const incomeCategory = await bootstrapCategory('INCOME');
+    const expenseCategory = await bootstrapCategory('EXPENSE');
+    await prisma.ledgerEntry.createMany({
+      data: [
+        { id: 'export-income', monthId: month.id, date: new Date('2026-06-01'), proofNo: '1', description: 'Dana masuk operasional', categoryId: incomeCategory.id, type: 'INCOME', amount: 500 },
+        { id: 'export-expense', monthId: month.id, date: new Date('2026-06-02'), proofNo: '2', description: 'Bi BBM', categoryId: expenseCategory.id, type: 'EXPENSE', amount: 250, proofImagePath: 'ledger-proofs/proof.png', proofImageName: 'proof.png' }
+      ]
+    });
+    await prisma.cashAdvance.create({
+      data: { id: 'export-kasbon', monthId: month.id, date: new Date('2026-06-03'), person: 'Dafa', description: 'Kasbon BBM', amount: 100, status: 'UNPAID' }
+    });
+
+    const res = await request(app).get(`/api/months/${month.id}/export.xlsx`).parse(parseBinaryResponse).expect(200);
+    expect(res.headers['content-type']).toContain('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    expect(res.headers['content-disposition']).toContain('LKH-SkyNet-2026-06.xlsx');
+    expect(res.body.length).toBeGreaterThan(1000);
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(res.body);
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Ringkasan', 'Sirkulasi Harian', 'Kasbon', 'Kategori']);
+    expect(workbook.getWorksheet('Ringkasan')?.getCell('B5').value).toBe(500);
+    expect(workbook.getWorksheet('Ringkasan')?.getCell('B9').value).toBe(1150);
+    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('C2').value).toBe('Dana masuk operasional');
+    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('H3').value).toBe('Ada');
+    expect(workbook.getWorksheet('Kasbon')?.getCell('B2').value).toBe('Dafa');
+  });
+
+  it('returns 404 when exporting a missing month', async () => {
+    const res = await request(app).get('/api/months/missing/export.xlsx').expect(404);
+    expect(res.body).toMatchObject({ success: false, error: 'Bulan LKH tidak ditemukan.' });
   });
 
   it('paginates, searches, and filters ledger rows while preserving running balance', async () => {

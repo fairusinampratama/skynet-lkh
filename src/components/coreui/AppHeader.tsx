@@ -12,7 +12,7 @@ import {
   CInputGroupText
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilLockUnlocked, cilMenu, cilMoon, cilPlus, cilSun } from '@coreui/icons';
+import { cilLockLocked, cilLockUnlocked, cilMenu, cilMoon, cilPlus, cilSpreadsheet, cilSun } from '@coreui/icons';
 import { useLkh } from '../../context/LkhContext';
 
 const padMonth = (month: number) => String(month).padStart(2, '0');
@@ -30,7 +30,8 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
     setOpeningBalance,
     changePeriod,
     createMonth,
-    toggleLock
+    toggleLock,
+    exportMonth
   } = useLkh();
 
   useEffect(() => {
@@ -70,6 +71,11 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
             <CInputGroupText>Periode</CInputGroupText>
             <CFormInput type="month" value={periodValue} onChange={handlePeriodChange} />
           </CInputGroup>
+
+          <CButton color="success" variant="outline" disabled={!month || busy} onClick={exportMonth} title="Export Excel">
+            <CIcon icon={cilSpreadsheet} className="me-2" />
+            Export Excel
+          </CButton>
 
           <CButtonGroup role="group" aria-label="Tema">
             <CButton color={darkMode ? 'secondary' : 'primary'} variant={darkMode ? 'outline' : undefined} title="Light" onClick={() => setDarkMode(false)}>

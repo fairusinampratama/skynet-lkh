@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 import multer from "multer";
+import ExcelJS from "exceljs";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ export const slug = (value: string) => value.toLowerCase().trim().replace(/[^a-z
 const id = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 const toNumber = (value: unknown) => Number(value || 0);
 const dateOnly = (value: Date | string) => new Date(value).toISOString().slice(0, 10);
+const currencyFormat = '"Rp" #,##0';
 const clampPageLimit = (value: unknown) => {
   const limit = Number(value) || 25;
   return [25, 50, 100].includes(limit) ? limit : 25;
@@ -185,6 +187,140 @@ export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
     byCategory: [...byCategory.entries()].map(([name, amount]) => ({ name, amount })),
     byDay: [...byDay.entries()].map(([date, values]) => ({ date, ...values }))
   };
+}
+
+function formatExportFileName(month: any) {
+  return `LKH-SkyNet-${month.year}-${String(month.month).padStart(2, "0")}.xlsx`;
+}
+
+function styleSheet(sheet: ExcelJS.Worksheet) {
+  sheet.views = [{ state: "frozen", ySplit: 1 }];
+  sheet.properties.defaultRowHeight = 18;
+  sheet.eachRow((row, rowNumber) => {
+    const currentFont = row.font || {};
+    row.font = { ...currentFont, name: "Arial", size: rowNumber === 1 ? 9 : 8, bold: currentFont.bold || rowNumber === 1 };
+    row.alignment = { vertical: "middle" };
+  });
+  const header = sheet.getRow(1);
+  header.height = 22;
+  header.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE2E8F0" } };
+    cell.border = { bottom: { style: "thin", color: { argb: "FFCBD5E1" } } };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+  });
+  if (sheet.rowCount > 1 && sheet.columnCount > 0) {
+    sheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: sheet.rowCount, column: sheet.columnCount }
+    };
+  }
+}
+
+function setMoneyColumns(sheet: ExcelJS.Worksheet, indexes: number[]) {
+  indexes.forEach((index) => {
+    sheet.getColumn(index).numFmt = currencyFormat;
+    sheet.getColumn(index).alignment = { horizontal: "right" };
+  });
+}
+
+export async function buildMonthWorkbook(payload: any) {
+  const { month, ledger, cashAdvances, summary } = payload;
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "LKH SkyNet";
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const summarySheet = workbook.addWorksheet("Ringkasan");
+  summarySheet.columns = [
+    { header: "Metrik", key: "metric", width: 28 },
+    { header: "Nilai", key: "value", width: 20 }
+  ];
+  summarySheet.addRows([
+    { metric: "Periode", value: month.label },
+    { metric: "Status", value: month.status },
+    { metric: "Saldo Awal", value: summary.openingBalance },
+    { metric: "Total Masuk", value: summary.totalIncome },
+    { metric: "Total Keluar", value: summary.totalExpense },
+    { metric: "Saldo Akhir", value: summary.closingBalance },
+    { metric: "Kasbon Aktif", value: summary.outstandingKasbon },
+    { metric: "Saldo Bersih", value: summary.closingBalance - summary.outstandingKasbon },
+    { metric: "Total Transaksi", value: summary.ledgerCount },
+    { metric: "Kasbon Belum Lunas", value: summary.outstandingKasbonCount }
+  ]);
+  [4, 5, 6, 7, 8, 9].forEach((row) => summarySheet.getCell(row, 2).numFmt = currencyFormat);
+  styleSheet(summarySheet);
+
+  const ledgerSheet = workbook.addWorksheet("Sirkulasi Harian");
+  ledgerSheet.columns = [
+    { header: "Tanggal", key: "date", width: 12 },
+    { header: "No Bukti", key: "proofNo", width: 12 },
+    { header: "Keterangan", key: "description", width: 36 },
+    { header: "Kategori", key: "category", width: 20 },
+    { header: "Masuk", key: "income", width: 16 },
+    { header: "Keluar", key: "expense", width: 16 },
+    { header: "Saldo", key: "runningBalance", width: 16 },
+    { header: "Bukti", key: "proof", width: 10 },
+    { header: "Nama File Bukti", key: "proofName", width: 24 }
+  ];
+  ledgerSheet.addRows(ledger.map((entry: any) => ({
+    date: entry.date,
+    proofNo: entry.proofNo || "",
+    description: entry.description,
+    category: entry.category?.name || "",
+    income: entry.type === "INCOME" ? entry.amount : null,
+    expense: entry.type === "EXPENSE" ? entry.amount : null,
+    runningBalance: entry.runningBalance,
+    proof: entry.proofImagePath ? "Ada" : "Tidak",
+    proofName: entry.proofImageName || ""
+  })));
+  ledgerSheet.addRow({
+    description: "TOTAL",
+    income: summary.totalIncome,
+    expense: summary.totalExpense,
+    runningBalance: summary.closingBalance
+  }).font = { name: "Arial", size: 8, bold: true };
+  setMoneyColumns(ledgerSheet, [5, 6, 7]);
+  styleSheet(ledgerSheet);
+
+  const kasbonSheet = workbook.addWorksheet("Kasbon");
+  kasbonSheet.columns = [
+    { header: "Tanggal", key: "date", width: 12 },
+    { header: "Nama", key: "person", width: 20 },
+    { header: "Keterangan", key: "description", width: 36 },
+    { header: "Nominal", key: "amount", width: 16 },
+    { header: "Status", key: "status", width: 14 },
+    { header: "Bukti", key: "proof", width: 10 },
+    { header: "Nama File Bukti", key: "proofName", width: 24 }
+  ];
+  kasbonSheet.addRows(cashAdvances.map((item: any) => ({
+    date: item.date,
+    person: item.person,
+    description: item.description,
+    amount: item.amount,
+    status: item.status === "PAID" ? "Lunas" : "Belum Lunas",
+    proof: item.proofImagePath ? "Ada" : "Tidak",
+    proofName: item.proofImageName || ""
+  })));
+  kasbonSheet.addRow({ description: "TOTAL KASBON AKTIF", amount: summary.outstandingKasbon }).font = { name: "Arial", size: 8, bold: true };
+  setMoneyColumns(kasbonSheet, [4]);
+  styleSheet(kasbonSheet);
+  for (let rowNumber = 2; rowNumber <= kasbonSheet.rowCount; rowNumber++) {
+    const statusCell = kasbonSheet.getCell(rowNumber, 5);
+    if (statusCell.value === "Lunas") statusCell.font = { name: "Arial", size: 8, bold: true, color: { argb: "FF047857" } };
+    if (statusCell.value === "Belum Lunas") statusCell.font = { name: "Arial", size: 8, bold: true, color: { argb: "FFB45309" } };
+  }
+
+  const categorySheet = workbook.addWorksheet("Kategori");
+  categorySheet.columns = [
+    { header: "Kategori", key: "name", width: 28 },
+    { header: "Total Keluar", key: "amount", width: 18 }
+  ];
+  categorySheet.addRows(summary.byCategory.map((item: any) => ({ name: item.name, amount: item.amount })));
+  categorySheet.addRow({ name: "TOTAL", amount: summary.totalExpense }).font = { name: "Arial", size: 8, bold: true };
+  setMoneyColumns(categorySheet, [2]);
+  styleSheet(categorySheet);
+
+  return { workbook, fileName: formatExportFileName(month) };
 }
 
 export async function createApp(options: { prisma?: PrismaClient; serveFrontend?: boolean } = {}) {
@@ -419,6 +555,18 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
   app.get("/api/months/:monthId/summary", async (req, res) => {
     try {
       res.json({ success: true, ...(await getMonthSummaryPayload(req.params.monthId)) });
+    } catch (error: any) {
+      res.status(404).json({ success: false, error: error.message });
+    }
+  });
+
+  app.get("/api/months/:monthId/export.xlsx", async (req, res) => {
+    try {
+      const exportPayload = await buildMonthWorkbook(await getMonthPayload(req.params.monthId));
+      const buffer = await exportPayload.workbook.xlsx.writeBuffer();
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="${exportPayload.fileName}"`);
+      res.send(Buffer.from(buffer));
     } catch (error: any) {
       res.status(404).json({ success: false, error: error.message });
     }
