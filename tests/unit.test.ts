@@ -67,11 +67,12 @@ describe('LKH June CSV seed parser', () => {
     const csv = fs.readFileSync('LKH SKYNET PERIODE 2026 - JUNI.csv', 'utf8');
     const parsed = parseJuneLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate });
     expect(parsed.openingBalance).toBe(1596761);
-    expect(parsed.rows.length).toBe(155);
-    expect(parsed.totalIncome).toBe(12116700);
-    expect(parsed.totalExpense).toBe(8676596);
-    expect(parsed.closingBalance).toBe(5036865);
-    expect(parsed.stoppedAtLine).toBe(163);
+    expect(parsed.rows.length).toBe(183);
+    expect(parsed.totalIncome).toBe(12816700);
+    expect(parsed.totalExpense).toBe(12266996);
+    expect(parsed.closingBalance).toBe(2146465);
+    expect(parsed.stoppedAtLine).toBe(192);
+    expect(parsed.warnings).toEqual(['Baris 186: nominal kosong, dilewati.']);
     expect(parsed.rows[0]).toMatchObject({
       id: 'seed-lkh-2026-06-0008',
       date: '2026-06-02',
@@ -93,11 +94,11 @@ describe('LKH June CSV seed parser', () => {
     expect(advances).toEqual([
       {
         id: 'seed-kasbon-2026-06-du-dida',
-        rowNumber: 585,
-        date: '2026-06-05',
+        rowNumber: 595,
+        date: '2026-06-15',
         person: 'Du Dida',
-        description: 'Bensin evalia sby; E-toll; Minuman snack; Makan siang; Parkir; Kurang',
-        amount: 500000,
+        description: 'Bensin evalia sby; E-toll; Minuman snack; Makan siang; Parkir; Listrik',
+        amount: 589900,
         status: 'UNPAID'
       }
     ]);
