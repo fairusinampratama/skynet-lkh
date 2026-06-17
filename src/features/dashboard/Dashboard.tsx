@@ -1,15 +1,18 @@
 import { ReactNode } from 'react';
-import { ArrowDownCircle, ArrowUpCircle, CalendarDays, CircleDollarSign, WalletCards } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, BadgeDollarSign, CalendarDays, CircleDollarSign, WalletCards } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { MetricCard } from '../../components/ui/MetricCard';
 import { Month, Summary } from '../../types';
 import { rupiah } from '../../lib/format';
 
 export function Dashboard({ summary, month, outstandingCount }: { summary: Summary; month: Month | null; outstandingCount: number }) {
+  const netBalance = summary.closingBalance - summary.outstandingKasbon;
+
   return (
     <div className="grid min-w-0 gap-5">
-      <section className="grid min-w-0 gap-3 md:grid-cols-2 2xl:grid-cols-4">
+      <section className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         <MetricCard icon={<WalletCards size={19} />} label="Saldo Tersedia" value={rupiah(summary.closingBalance)} detail="Saldo akhir bulan berjalan" tone="emerald" />
+        <MetricCard icon={<BadgeDollarSign size={19} />} label="Saldo Bersih" value={rupiah(netBalance)} detail="Saldo tersedia dikurangi kasbon aktif" tone="emerald" />
         <MetricCard icon={<ArrowUpCircle size={19} />} label="Penerimaan" value={rupiah(summary.totalIncome + summary.openingBalance)} detail="Termasuk saldo awal" tone="blue" />
         <MetricCard icon={<ArrowDownCircle size={19} />} label="Pengeluaran" value={rupiah(summary.totalExpense)} detail={`${summary.ledgerCount} transaksi ledger`} tone="rose" />
         <MetricCard icon={<CircleDollarSign size={19} />} label="Kasbon Aktif" value={rupiah(summary.outstandingKasbon)} detail={`${outstandingCount} belum lunas`} tone="amber" />
