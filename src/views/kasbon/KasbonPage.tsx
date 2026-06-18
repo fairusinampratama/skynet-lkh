@@ -4,6 +4,7 @@ import { useLkh } from '../../context/LkhContext';
 export default function KasbonPage() {
   const {
     locked,
+    canManage,
     busy,
     kasbonForm,
     cashAdvances,
@@ -24,7 +25,7 @@ export default function KasbonPage() {
 
   return (
     <KasbonView
-      locked={locked}
+      locked={locked || !canManage}
       busy={busy}
       form={kasbonForm}
       items={cashAdvances}

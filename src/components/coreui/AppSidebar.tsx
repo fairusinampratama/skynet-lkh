@@ -27,7 +27,7 @@ export function AppSidebar({
   onUnfoldableChange: (value: boolean | ((current: boolean) => boolean)) => void;
   onNavigate: () => void;
 }) {
-  const { darkMode } = useLkh();
+  const { darkMode, canManage } = useLkh();
   const closeSidebar = () => {
     onUnfoldableChange(false);
     onVisibleChange(false);
@@ -53,7 +53,7 @@ export function AppSidebar({
       </CSidebarHeader>
 
       <CSidebarNav>
-        {navigation.map((item) => (
+        {navigation.filter((item) => !item.adminOnly || canManage).map((item) => (
           <CNavItem key={item.to}>
             <NavLink className="nav-link" to={item.to} onClick={onNavigate}>
               {item.icon}

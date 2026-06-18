@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useRef } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
   CBadge,
   CButton,
@@ -9,29 +9,41 @@ import {
   CHeaderNav,
   CHeaderToggler,
   CInputGroup,
-  CInputGroupText
+  CInputGroupText,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { cilLockLocked, cilLockUnlocked, cilMenu, cilMoon, cilPlus, cilSpreadsheet, cilSun } from '@coreui/icons';
+import { cilAccountLogout, cilLockLocked, cilLockUnlocked, cilMenu, cilMoon, cilPlus, cilSpreadsheet, cilSun, cilUser } from '@coreui/icons';
 import { useLkh } from '../../context/LkhContext';
 
 const padMonth = (month: number) => String(month).padStart(2, '0');
 
 export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   const headerRef = useRef<HTMLDivElement>(null);
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [nextPassword, setNextPassword] = useState('');
   const {
+    user,
     month,
     periodForm,
     periodExists,
     periodsLoaded,
     busy,
     darkMode,
+    canManage,
     setDarkMode,
     setOpeningBalance,
     changePeriod,
     createMonth,
     toggleLock,
-    exportMonth
+    exportMonth,
+    logout,
+    changePassword
   } = useLkh();
 
   useEffect(() => {
@@ -49,6 +61,13 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
   const handlePeriodChange = (event: ChangeEvent<HTMLInputElement>) => {
     const [year, month] = event.target.value.split('-').map(Number);
     if (year && month) changePeriod({ year, month });
+  };
+
+  const submitPassword = async () => {
+    await changePassword(currentPassword, nextPassword);
+    setCurrentPassword('');
+    setNextPassword('');
+    setPasswordModal(false);
   };
 
   return (
@@ -86,7 +105,16 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
             </CButton>
           </CButtonGroup>
 
-          {month && (
+          <CButton color="secondary" variant="outline" title={user?.role || 'User'} onClick={() => setPasswordModal(true)}>
+            <CIcon icon={cilUser} className="me-2" />
+            {user?.name}
+          </CButton>
+
+          <CButton color="secondary" variant="outline" title="Logout" onClick={logout}>
+            <CIcon icon={cilAccountLogout} />
+          </CButton>
+
+          {canManage && month && (
             <CButton color={month.status === 'DRAFT' ? 'warning' : 'secondary'} variant="outline" title={month.status === 'DRAFT' ? 'Kunci periode' : 'Buka periode'} onClick={toggleLock}>
               <CIcon icon={month.status === 'DRAFT' ? cilLockLocked : cilLockUnlocked} />
             </CButton>
@@ -94,7 +122,7 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
         </CHeaderNav>
       </CContainer>
 
-      {periodsLoaded && !periodExists && (
+      {canManage && periodsLoaded && !periodExists && (
         <CContainer fluid className="border-top py-3">
           <div className="d-flex flex-column gap-2 rounded border border-warning-subtle bg-warning bg-opacity-10 p-3 flex-md-row">
             <CInputGroup>
@@ -108,6 +136,20 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
           </div>
         </CContainer>
       )}
+
+      <CModal visible={passwordModal} onClose={() => setPasswordModal(false)}>
+        <CModalHeader>
+          <CModalTitle>Ubah Password</CModalTitle>
+        </CModalHeader>
+        <CModalBody className="d-grid gap-3">
+          <CFormInput type="password" label="Password saat ini" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
+          <CFormInput type="password" label="Password baru" value={nextPassword} onChange={(event) => setNextPassword(event.target.value)} />
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" variant="outline" onClick={() => setPasswordModal(false)}>Batal</CButton>
+          <CButton color="primary" disabled={busy || !currentPassword || !nextPassword} onClick={submitPassword}>Simpan</CButton>
+        </CModalFooter>
+      </CModal>
     </CHeader>
   );
 }

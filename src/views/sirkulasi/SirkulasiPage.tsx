@@ -4,6 +4,7 @@ import { useLkh } from '../../context/LkhContext';
 export default function SirkulasiPage() {
   const {
     locked,
+    canManage,
     busy,
     entryForm,
     entryCategories,
@@ -25,7 +26,7 @@ export default function SirkulasiPage() {
 
   return (
     <LedgerView
-      locked={locked}
+      locked={locked || !canManage}
       busy={busy}
       form={entryForm}
       entryCategories={entryCategories}

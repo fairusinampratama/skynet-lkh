@@ -1,11 +1,12 @@
 import { ReactNode } from 'react';
-import { cilCash, cilChartPie, cilSpeedometer } from '@coreui/icons';
+import { cilCash, cilChartPie, cilSpeedometer, cilUser } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 
 export type NavigationItem = {
   name: string;
   to: string;
   icon: ReactNode;
+  adminOnly?: boolean;
 };
 
 export const navigation: NavigationItem[] = [
@@ -23,5 +24,11 @@ export const navigation: NavigationItem[] = [
     name: 'Kasbon',
     to: '/kasbon',
     icon: <CIcon icon={cilCash} customClassName="nav-icon" />
+  },
+  {
+    name: 'Users',
+    to: '/users',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+    adminOnly: true
   }
 ];

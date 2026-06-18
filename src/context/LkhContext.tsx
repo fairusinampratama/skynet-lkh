@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { today } from '../lib/format';
-import { CashAdvance, CashAdvanceFilters, CashAdvanceMeta, CashAdvanceStatus, Category, EntryType, LedgerEntry, LedgerFilters, LedgerMeta, Month, Summary } from '../types';
+import { CashAdvance, CashAdvanceFilters, CashAdvanceMeta, CashAdvanceStatus, Category, EntryType, LedgerEntry, LedgerFilters, LedgerMeta, Month, Summary, User, UserRole } from '../types';
 
 const emptySummary: Summary = {
   openingBalance: 0,
@@ -43,10 +43,14 @@ type LedgerFormState = { date: string; proofNo: string; description: string; cat
 type KasbonFormState = { date: string; person: string; description: string; amount: string };
 type KasbonEditState = KasbonFormState & { status: CashAdvanceStatus };
 type PeriodState = { year: number; month: number; openingBalance: string };
+type UserFormState = { username: string; name: string; role: UserRole; password: string; active: boolean };
 
 type LkhContextValue = {
   months: Month[];
   categories: Category[];
+  user: User | null;
+  authLoading: boolean;
+  canManage: boolean;
   activeMonthId: string;
   month: Month | null;
   periodsLoaded: boolean;
@@ -70,6 +74,14 @@ type LkhContextValue = {
   darkMode: boolean;
   locked: boolean;
   clearMessage: () => void;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  changePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
+  loadUsers: () => Promise<User[]>;
+  createUser: (form: UserFormState) => Promise<void>;
+  updateUser: (id: string, form: Omit<UserFormState, 'password'>) => Promise<void>;
+  resetUserPassword: (id: string, password: string) => Promise<void>;
+  setUserActive: (id: string, active: boolean) => Promise<void>;
   setEntryForm: (value: LedgerFormState) => void;
   setKasbonForm: (value: KasbonFormState) => void;
   setOpeningBalance: (value: string) => void;
@@ -109,6 +121,8 @@ const getInitialDarkMode = () => {
 export function LkhProvider({ children }: { children: ReactNode }) {
   const [months, setMonths] = useState<Month[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeMonthId, setActiveMonthId] = useState('');
   const [month, setMonth] = useState<Month | null>(null);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -148,6 +162,7 @@ export function LkhProvider({ children }: { children: ReactNode }) {
   const expenseCategories = useMemo(() => categories.filter((cat) => cat.kind === 'EXPENSE'), [categories]);
   const entryCategories = entryForm.type === 'INCOME' ? incomeCategories : expenseCategories;
   const locked = month?.status !== 'DRAFT';
+  const canManage = user?.role === 'ADMIN';
   const outstandingCount = summary.outstandingKasbonCount;
   const selectedPeriod = useMemo(
     () => months.find((item) => item.year === periodForm.year && item.month === periodForm.month) || null,
@@ -164,6 +179,18 @@ export function LkhProvider({ children }: { children: ReactNode }) {
     if (first && !activeMonthId) {
       setPeriodForm((current) => ({ ...current, year: first.year, month: first.month, openingBalance: '' }));
       setActiveMonthId(first.id);
+    }
+  };
+
+  const loadMe = async () => {
+    setAuthLoading(true);
+    try {
+      const data = await api('/api/auth/me');
+      setUser(data.user);
+    } catch {
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -216,8 +243,18 @@ export function LkhProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    loadBootstrap().catch((error) => setMessage(error.message));
+    loadMe().catch((error) => setMessage(error.message));
   }, []);
+
+  useEffect(() => {
+    if (user) loadBootstrap().catch((error) => setMessage(error.message));
+    else {
+      setMonths([]);
+      setCategories([]);
+      setActiveMonthId('');
+      setPeriodsLoaded(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!activeMonthId) {
@@ -266,6 +303,58 @@ export function LkhProvider({ children }: { children: ReactNode }) {
       setBusy(false);
     }
   };
+
+  const login = async (username: string, password: string) => {
+    setBusy(true);
+    setMessage('');
+    try {
+      const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+      setUser(data.user);
+      setMessage('Login berhasil.');
+    } catch (error: any) {
+      setMessage(error.message || 'Login gagal.');
+      throw error;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const logout = async () => {
+    await api('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    setUser(null);
+    setMonth(null);
+    setLedger([]);
+    setCashAdvances([]);
+    setSummary(emptySummary);
+    setMessage('');
+  };
+
+  const changePassword = async (currentPassword: string, nextPassword: string) => run(async () => {
+    await api('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, nextPassword }) });
+  }, 'Password diperbarui.');
+
+  const loadUsers = async () => {
+    const data = await api('/api/users');
+    return data.users as User[];
+  };
+
+  const createUser = async (form: UserFormState) => run(async () => {
+    await api('/api/users', { method: 'POST', body: JSON.stringify(form) });
+  }, 'Pengguna dibuat.');
+
+  const updateUser = async (id: string, form: Omit<UserFormState, 'password'>) => run(async () => {
+    await api(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(form) });
+    if (user?.id === id) await loadMe();
+  }, 'Pengguna diperbarui.');
+
+  const resetUserPassword = async (id: string, password: string) => run(async () => {
+    await api(`/api/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ password }) });
+  }, 'Password pengguna direset.');
+
+  const setUserActive = async (id: string, active: boolean) => run(async () => {
+    await api(`/api/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ active }) });
+    if (user?.id === id && !active) await logout();
+  }, active ? 'Pengguna diaktifkan.' : 'Pengguna dinonaktifkan.');
 
   const createMonth = () => run(async () => {
     const data = await api('/api/months', {
@@ -385,6 +474,9 @@ export function LkhProvider({ children }: { children: ReactNode }) {
   const value: LkhContextValue = {
     months,
     categories,
+    user,
+    authLoading,
+    canManage,
     activeMonthId,
     month,
     periodsLoaded,
@@ -408,6 +500,14 @@ export function LkhProvider({ children }: { children: ReactNode }) {
     darkMode,
     locked,
     clearMessage: () => setMessage(''),
+    login,
+    logout,
+    changePassword,
+    loadUsers,
+    createUser,
+    updateUser,
+    resetUserPassword,
+    setUserActive,
     setEntryForm,
     setKasbonForm,
     setOpeningBalance: (openingBalance) => setPeriodForm((current) => ({ ...current, openingBalance })),

@@ -2,6 +2,7 @@ export type MonthStatus = 'DRAFT' | 'LOCKED' | 'ARCHIVED';
 export type EntryType = 'INCOME' | 'EXPENSE';
 export type CategoryKind = 'INCOME' | 'EXPENSE';
 export type CashAdvanceStatus = 'UNPAID' | 'PAID';
+export type UserRole = 'ADMIN' | 'READER';
 
 export interface Month {
   id: string;
@@ -19,6 +20,14 @@ export interface Category {
   color: string;
 }
 
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  active: boolean;
+}
+
 export interface LedgerEntry {
   id: string;
   monthId: string;
@@ -31,10 +40,12 @@ export interface LedgerEntry {
   proofImageUrl?: string | null;
   description: string;
   categoryId: string;
-  category: Category;
+  category: Category | null;
   type: EntryType;
   amount: number;
   runningBalance: number;
+  source?: string;
+  synthetic?: boolean;
 }
 
 export interface LedgerFilters {

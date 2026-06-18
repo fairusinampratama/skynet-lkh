@@ -6,11 +6,18 @@ import {
   parseCsv,
   parseIndonesianDate,
   slug,
-  summarize
+  summarize,
+  validatePasswordPolicy
 } from '../server';
-import { normalizeDescription, parseJuneCashAdvances, parseJuneLedgerCsv } from '../src/lib/lkhImport';
+import { normalizeDescription, parseJuneCashAdvances, parseJuneLedgerCsv, parseLkhLedgerCsv } from '../src/lib/lkhImport';
 
 describe('LKH parsing helpers', () => {
+  it('validates the auth password policy', () => {
+    expect(validatePasswordPolicy('short1')).toBe('Password minimal 8 karakter.');
+    expect(validatePasswordPolicy('password')).toBe('Password harus mengandung huruf dan angka.');
+    expect(validatePasswordPolicy('Password1')).toBeNull();
+  });
+
   it('parses Indonesian and spreadsheet money formats', () => {
     expect(parseAmount(10000)).toBe(10000);
     expect(parseAmount('10,000')).toBe(10000);
@@ -25,6 +32,7 @@ describe('LKH parsing helpers', () => {
     expect(parseIndonesianDate('03-JUNI', 2026)).toBe('2026-06-03');
     expect(parseIndonesianDate('6-Jun-26', 2026)).toBe('2026-06-06');
     expect(parseIndonesianDate('05/06', 2026)).toBe('2026-06-05');
+    expect(parseIndonesianDate('1/20', 2026)).toBe('2026-01-20');
   });
 
   it('preserves quoted commas in CSV fields', () => {
@@ -63,6 +71,29 @@ describe('LKH calculations', () => {
 });
 
 describe('LKH June CSV seed parser', () => {
+  it('parses all available 2026 period CSV templates with period-specific cutoffs', () => {
+    const cases = [
+      { month: 1, file: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv', openingBalance: 0, rows: 408, totalIncome: 32976972, totalExpense: 30161005, closingBalance: 2815967, warnings: [] },
+      { month: 2, file: 'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv', openingBalance: 34117, rows: 375, totalIncome: 35873500, totalExpense: 32166912, closingBalance: 3740705, warnings: [] },
+      { month: 3, file: 'LKH SKYNET PERIODE 2026 - MARET (1).csv', openingBalance: 683705, rows: 292, totalIncome: 29796200, totalExpense: 25810320, closingBalance: 4669585, warnings: [] },
+      { month: 4, file: 'LKH SKYNET PERIODE 2026 - APRIL (1).csv', openingBalance: 370000, rows: 393, totalIncome: 31620099, totalExpense: 24023869, closingBalance: 7966230, warnings: [] },
+      { month: 5, file: 'LKH SKYNET PERIODE 2026 - MEI (1).csv', openingBalance: 1570630, rows: 430, totalIncome: 35418130, totalExpense: 30235869, closingBalance: 6752891, warnings: [] }
+    ];
+
+    for (const item of cases) {
+      const csv = fs.readFileSync(item.file, 'utf8');
+      const parsed = parseLkhLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate }, { year: 2026, month: item.month });
+      expect(parsed.openingBalance).toBe(item.openingBalance);
+      expect(parsed.rows.length).toBe(item.rows);
+      expect(parsed.totalIncome).toBe(item.totalIncome);
+      expect(parsed.totalExpense).toBe(item.totalExpense);
+      expect(parsed.closingBalance).toBe(item.closingBalance);
+      expect(parsed.warnings).toEqual(item.warnings);
+      expect(parsed.rows.some((row) => row.description.toLowerCase() === 'saldo awal')).toBe(false);
+      expect(parsed.rows.some((row) => row.description.toLowerCase().includes('rincian kas bon'))).toBe(false);
+    }
+  });
+
   it('parses the full June ledger section and stops before footer rows', () => {
     const csv = fs.readFileSync('LKH SKYNET PERIODE 2026 - JUNI.csv', 'utf8');
     const parsed = parseJuneLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate });

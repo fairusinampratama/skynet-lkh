@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import ExcelJS from 'exceljs';
 import request from 'supertest';
+import argon2 from 'argon2';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../server';
 
@@ -12,6 +13,8 @@ let app: Awaited<ReturnType<typeof createApp>>;
 let dataDir: string;
 
 async function clean() {
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.cashAdvance.deleteMany();
   await prisma.ledgerEntry.deleteMany();
   await prisma.month.deleteMany();
@@ -41,7 +44,7 @@ function parseBinaryResponse(res: any, callback: (error: Error | null, body?: Bu
 beforeAll(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lkh-test-'));
   process.env.DATA_DIR = dataDir;
-  app = await createApp({ prisma, serveFrontend: false });
+  app = await createApp({ prisma, serveFrontend: false, auth: false });
 });
 
 beforeEach(async () => {
@@ -52,6 +55,59 @@ afterAll(async () => {
   await clean();
   await prisma.$disconnect();
   fs.rmSync(dataDir, { recursive: true, force: true });
+});
+
+describe('LKH auth and role enforcement', () => {
+  async function createAuthApp() {
+    return createApp({ prisma, serveFrontend: false });
+  }
+
+  async function createUser(username: string, role: 'ADMIN' | 'READER', password = 'Pass1234') {
+    return prisma.user.create({
+      data: {
+        id: `user-${username}`,
+        username,
+        name: username,
+        role,
+        passwordHash: await argon2.hash(password)
+      }
+    });
+  }
+
+  it('requires login, allows admin mutations, and keeps reader read-only with export access', async () => {
+    const authApp = await createAuthApp();
+    await createUser('admin', 'ADMIN');
+    await createUser('reader', 'READER');
+
+    await request(authApp).get('/api/bootstrap').expect(401);
+
+    const admin = request.agent(authApp);
+    await admin.post('/api/auth/login').send({ username: 'admin', password: 'Pass1234' }).expect(200);
+    const created = await admin.post('/api/months').send({ year: 2026, month: 7, openingBalance: 1000 }).expect(200);
+    await admin.get('/api/users').expect(200).expect(({ body }) => {
+      expect(body.users.map((item: any) => item.username).sort()).toEqual(['admin', 'reader']);
+    });
+
+    const reader = request.agent(authApp);
+    await reader.post('/api/auth/login').send({ username: 'reader', password: 'Pass1234' }).expect(200);
+    await reader.get('/api/bootstrap').expect(200);
+    await reader.get(`/api/months/${created.body.month.id}/export.xlsx`).parse(parseBinaryResponse).expect(200);
+    await reader.post('/api/months').send({ year: 2026, month: 8, openingBalance: 0 }).expect(403);
+  });
+
+  it('supports password change and blocks inactive users', async () => {
+    const authApp = await createAuthApp();
+    const user = await createUser('owner', 'ADMIN');
+    const agent = request.agent(authApp);
+    await agent.post('/api/auth/login').send({ username: 'owner', password: 'Pass1234' }).expect(200);
+    await agent.post('/api/auth/change-password').send({ currentPassword: 'Pass1234', nextPassword: 'Next1234' }).expect(200);
+    await agent.post('/api/auth/logout').expect(200);
+    await request(authApp).post('/api/auth/login').send({ username: 'owner', password: 'Pass1234' }).expect(401);
+    await request(authApp).post('/api/auth/login').send({ username: 'owner', password: 'Next1234' }).expect(200);
+
+    await prisma.user.update({ where: { id: user.id }, data: { active: false } });
+    await request(authApp).post('/api/auth/login').send({ username: 'owner', password: 'Next1234' }).expect(401);
+  });
 });
 
 describe('LKH API and DB integration', () => {
@@ -94,7 +150,8 @@ describe('LKH API and DB integration', () => {
     }).expect(200);
 
     const res = await request(app).get(`/api/months/${month.id}`).expect(200);
-    expect(res.body.ledger.map((entry: any) => entry.runningBalance)).toEqual([1500, 1250]);
+    expect(res.body.ledger.map((entry: any) => entry.runningBalance)).toEqual([1000, 1500, 1250]);
+    expect(res.body.ledger[0]).toMatchObject({ description: 'Saldo Awal', amount: 1000, runningBalance: 1000, synthetic: true });
     expect(res.body.summary).toMatchObject({ ledgerCount: 2, totalIncome: 500, totalExpense: 250, closingBalance: 1250 });
   });
 
@@ -135,8 +192,9 @@ describe('LKH API and DB integration', () => {
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Ringkasan', 'Sirkulasi Harian', 'Kasbon', 'Kategori']);
     expect(workbook.getWorksheet('Ringkasan')?.getCell('B5').value).toBe(500);
     expect(workbook.getWorksheet('Ringkasan')?.getCell('B9').value).toBe(1150);
-    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('C2').value).toBe('Dana masuk operasional');
-    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('H3').value).toBe('Ada');
+    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('C2').value).toBe('Saldo Awal');
+    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('C3').value).toBe('Dana masuk operasional');
+    expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('H4').value).toBe('Ada');
     expect(workbook.getWorksheet('Kasbon')?.getCell('B2').value).toBe('Dafa');
   });
 
@@ -168,20 +226,20 @@ describe('LKH API and DB integration', () => {
     await prisma.ledgerEntry.createMany({ data: rows });
 
     const pageTwo = await request(app).get(`/api/months/${month.id}/ledger?page=2&limit=25`).expect(200);
-    expect(pageTwo.body).toMatchObject({ page: 2, limit: 25, total: 26, totalPages: 2 });
-    expect(pageTwo.body.ledger).toHaveLength(1);
-    expect(pageTwo.body.ledger[0]).toMatchObject({ id: 'ledger-page-extra-26', runningBalance: 1127 });
+    expect(pageTwo.body).toMatchObject({ page: 2, limit: 25, total: 27, totalPages: 2 });
+    expect(pageTwo.body.ledger).toHaveLength(2);
+    expect(pageTwo.body.ledger[1]).toMatchObject({ id: 'ledger-page-extra-26', runningBalance: 1127 });
 
     const pageOne = await request(app).get(`/api/months/${month.id}/ledger?page=1&limit=25`).expect(200);
-    expect(pageOne.body.ledger.slice(0, 3).map((entry: any) => entry.runningBalance)).toEqual([1500, 1250, 1150]);
+    expect(pageOne.body.ledger.slice(0, 4).map((entry: any) => entry.runningBalance)).toEqual([1000, 1500, 1250, 1150]);
 
     const search = await request(app).get(`/api/months/${month.id}/ledger?search=bbm`).expect(200);
     expect(search.body.total).toBe(1);
     expect(search.body.ledger[0]).toMatchObject({ description: 'Bi BBM kantor', runningBalance: 1250 });
 
     const incomeOnly = await request(app).get(`/api/months/${month.id}/ledger?type=INCOME`).expect(200);
-    expect(incomeOnly.body.total).toBe(1);
-    expect(incomeOnly.body.ledger[0].type).toBe('INCOME');
+    expect(incomeOnly.body.total).toBe(2);
+    expect(incomeOnly.body.ledger[0]).toMatchObject({ description: 'Saldo Awal', type: 'INCOME', synthetic: true });
 
     const categoryOnly = await request(app).get(`/api/months/${month.id}/ledger?categoryId=${expenseCategory.id}`).expect(200);
     expect(categoryOnly.body.total).toBe(25);
@@ -243,7 +301,7 @@ describe('LKH API and DB integration', () => {
 
     const payload = await request(app).get(`/api/months/${month.id}`).expect(200);
     expect(payload.body.summary).toMatchObject({ totalIncome: 500, totalExpense: 0, closingBalance: 1500 });
-    expect(payload.body.ledger[0]).toMatchObject({ date: '2026-06-03', proofNo: '3', description: 'Dana masuk koreksi', type: 'INCOME' });
+    expect(payload.body.ledger[1]).toMatchObject({ date: '2026-06-03', proofNo: '3', description: 'Dana masuk koreksi', type: 'INCOME' });
   });
 
   it('uploads, replaces, rejects, and deletes ledger proof images', async () => {
@@ -277,7 +335,7 @@ describe('LKH API and DB integration', () => {
     expect(replaced.body.entry).toMatchObject({ proofImageName: 'proof.webp', proofImageMime: 'image/webp' });
 
     const payload = await request(app).get(`/api/months/${month.id}`).expect(200);
-    expect(payload.body.ledger[0].proofImageUrl).toContain('/uploads/ledger-proofs/');
+    expect(payload.body.ledger.find((entry: any) => entry.id === entryId).proofImageUrl).toContain('/uploads/ledger-proofs/');
 
     await request(app).delete(`/api/ledger/${entryId}/proof`).expect(200);
     const cleared = await prisma.ledgerEntry.findUniqueOrThrow({ where: { id: entryId } });
