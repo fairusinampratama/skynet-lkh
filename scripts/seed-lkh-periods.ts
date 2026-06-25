@@ -19,7 +19,7 @@ const prisma = new PrismaClient();
 const colors = ['#2563eb', '#0f766e', '#ca8a04', '#dc2626', '#f97316', '#eab308', '#0891b2', '#7c3aed', '#9333ea', '#059669', '#0284c7', '#64748b'];
 
 const PERIOD_FILES: Period[] = [
-  { year: 2026, month: 1, fileName: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv' },
+  { year: 2026, month: 1, fileName: 'LKH SKYNET PERIODE 2026 - Copy of JANUARI.csv' },
   { year: 2026, month: 2, fileName: 'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv' },
   { year: 2026, month: 3, fileName: 'LKH SKYNET PERIODE 2026 - MARET (1).csv' },
   { year: 2026, month: 4, fileName: 'LKH SKYNET PERIODE 2026 - APRIL (1).csv' },

@@ -276,6 +276,9 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
 }
 
 function extractReportedBalances(rows: string[][], tools: ParserTools) {
+  const sidePanelBalances = extractSidePanelReportedBalances(rows, tools);
+  if (sidePanelBalances) return sidePanelBalances;
+
   for (let i = rows.length - 3; i >= 0; i--) {
     const closing = spreadsheetFooterAmount(rows[i], tools);
     const cashAdvance = spreadsheetFooterAmount(rows[i + 1], tools);
@@ -294,6 +297,24 @@ function extractReportedBalances(rows: string[][], tools: ParserTools) {
     reportedCashAdvanceTotal: null,
     reportedCashOnHand: null
   };
+}
+
+function extractSidePanelReportedBalances(rows: string[][], tools: ParserTools) {
+  for (let i = 0; i < rows.length - 2; i++) {
+    const closing = tools.parseAmount(rows[i]?.[16]);
+    const cashAdvance = tools.parseAmount(rows[i + 1]?.[16]);
+    const cashOnHand = tools.parseAmount(rows[i + 2]?.[16]);
+    if (!closing || !cashAdvance) continue;
+    if (closing - cashAdvance !== cashOnHand) continue;
+
+    return {
+      reportedClosingBalance: closing,
+      reportedCashAdvanceTotal: cashAdvance,
+      reportedCashOnHand: cashOnHand
+    };
+  }
+
+  return null;
 }
 
 function spreadsheetFooterAmount(row: string[] | undefined, tools: ParserTools) {
@@ -317,6 +338,8 @@ export function parseLkhCashAdvances(csv: string, tools: ParserTools, options: L
   const employeeSectionIndex = rows.findIndex((row) => (row[2] || '').trim().toLowerCase().replace(/\s+/g, ' ') === 'kasbone karyawan');
   const detailedSectionIndexes = rows.flatMap((row, index) => (row[2] || '').trim().toLowerCase().replace(/\s+/g, ' ') === 'rincian kas bon' ? [index] : []);
   const advances: LkhCashAdvanceSeed[] = [];
+
+  advances.push(...parseSidePanelCashAdvances(rows, tools, options));
 
   if (employeeSectionIndex >= 0) {
     advances.push(...parseEmployeeCashAdvances(rows, employeeSectionIndex, tools, options));
@@ -360,6 +383,38 @@ export function parseLkhCashAdvances(csv: string, tools: ParserTools, options: L
 
   if (!detailedSectionIndexes.length && employeeSectionIndex < 0) {
     advances.push(...parseLooseCashAdvances(rows, tools, options));
+  }
+
+  return advances;
+}
+
+function parseSidePanelCashAdvances(rows: string[][], tools: ParserTools, options: LkhPeriodOptions) {
+  const advances: LkhCashAdvanceSeed[] = [];
+  const headerIndex = rows.findIndex((row) => row.some((cell) => String(cell || '').trim().toLowerCase().replace(/\s+/g, ' ') === 'rincian kas bon'));
+  if (headerIndex < 0) return advances;
+
+  let currentDate = '';
+  for (let i = headerIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    const line = i + 1;
+    const date = tools.parseIndonesianDate(row[11] || '', options.year);
+    if (date) currentDate = date;
+
+    const description = (row[13] || '').trim().replace(/\s+/g, ' ');
+    const amount = tools.parseAmount(row[16]);
+    if (!description && !amount && !date) continue;
+    if (!description && amount) continue;
+    if (!description || !amount || amount <= 0) continue;
+
+    advances.push({
+      id: `seed-kasbon-${periodKey(options.year, options.month)}-side-${String(line).padStart(4, '0')}`,
+      rowNumber: line,
+      date: currentDate || `${options.year}-${String(options.month).padStart(2, '0')}-01`,
+      person: inferCashAdvancePerson(description),
+      description: normalizeDescription(description),
+      amount,
+      status: 'UNPAID'
+    });
   }
 
   return advances;

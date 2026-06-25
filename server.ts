@@ -198,7 +198,7 @@ function withOpeningBalanceRow(month: any, ledger: any[]) {
 }
 
 export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
-  const dashboardLedger = ledger.filter((entry) => entry.dashboardIncluded !== false);
+  const dashboardLedger = ledger;
   const computedIncome = dashboardLedger.filter((entry) => entry.type === "INCOME").reduce((sum, entry) => sum + entry.amount, 0);
   const computedExpense = dashboardLedger.filter((entry) => entry.type === "EXPENSE").reduce((sum, entry) => sum + entry.amount, 0);
   const totalIncome = computedIncome;

@@ -116,7 +116,7 @@ describe('LKH calculations', () => {
     ]);
   });
 
-  it('summarizes dashboard totals from DB rows marked for dashboard inclusion', () => {
+  it('summarizes dashboard totals from every ledger row shown in sirkulasi', () => {
     const ledger = computeLedger(month, [
       { id: 'archive', date: '2026-06-01', createdAt: '2026-06-01T00:00:00.000Z', type: 'INCOME', amount: 999, category, dashboardIncluded: false },
       { id: 'income', date: '2026-06-02', createdAt: '2026-06-02T00:00:00.000Z', type: 'INCOME', amount: 500, category, dashboardIncluded: true },
@@ -125,8 +125,8 @@ describe('LKH calculations', () => {
     ]);
     const summary = summarize(month, ledger, []);
     expect(summary.ledgerCount).toBe(4);
-    expect(summary.dashboardLedgerCount).toBe(3);
-    expect(summary.totalIncome).toBe(500);
+    expect(summary.dashboardLedgerCount).toBe(4);
+    expect(summary.totalIncome).toBe(1499);
     expect(summary.totalExpense).toBe(200);
     expect(summary.byCategory).toEqual([{ name: 'transportasi', amount: 200 }]);
   });
@@ -135,7 +135,7 @@ describe('LKH calculations', () => {
 describe('LKH June CSV seed parser', () => {
   it('parses all available 2026 period CSV templates with period-specific cutoffs', () => {
     const cases = [
-      { month: 1, file: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv', openingBalance: 0, rows: 408, dashboardRows: 221, totalIncome: 20713000, totalExpense: 17003383, closingBalance: 3709617, reportedCashAdvanceTotal: 3675500, reportedCashOnHand: 34117, warnings: [] },
+      { month: 1, file: 'LKH SKYNET PERIODE 2026 - Copy of JANUARI.csv', openingBalance: 0, rows: 409, dashboardRows: 409, totalIncome: 35092622, totalExpense: 30161005, closingBalance: 4931617, reportedCashAdvanceTotal: 4897500, reportedCashOnHand: 34117, warnings: [] },
       { month: 2, file: 'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv', openingBalance: 34117, rows: 375, dashboardRows: 375, totalIncome: 35819000, totalExpense: 32112412, closingBalance: 3740705, reportedCashAdvanceTotal: 3057000, reportedCashOnHand: 683705, warnings: [] },
       { month: 3, file: 'LKH SKYNET PERIODE 2026 - MARET (1).csv', openingBalance: 683705, rows: 292, dashboardRows: 292, totalIncome: 29749000, totalExpense: 25763120, closingBalance: 4669585, reportedCashAdvanceTotal: 4756500, reportedCashOnHand: -86915, warnings: [] },
       { month: 4, file: 'LKH SKYNET PERIODE 2026 - APRIL (1).csv', openingBalance: 370000, rows: 393, dashboardRows: 393, totalIncome: 31561000, totalExpense: 23964770, closingBalance: 7966230, reportedCashAdvanceTotal: 6395600, reportedCashOnHand: 1570630, warnings: [] },
@@ -208,7 +208,7 @@ describe('LKH June CSV seed parser', () => {
 
   it('parses monthly kasbon detail rows without adding footer reconciliation rows', () => {
     const cases = [
-      { month: 1, file: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv', rows: 40, total: 3675500 },
+      { month: 1, file: 'LKH SKYNET PERIODE 2026 - Copy of JANUARI.csv', rows: 58, total: 4897500 },
       { month: 5, file: 'LKH SKYNET PERIODE 2026 - MEI (1).csv', rows: 39, total: 3585500 }
     ];
 
