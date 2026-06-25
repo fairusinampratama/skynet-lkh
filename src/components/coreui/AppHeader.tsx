@@ -19,6 +19,7 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilAccountLogout, cilLockLocked, cilLockUnlocked, cilMenu, cilMoon, cilPlus, cilSpreadsheet, cilSun, cilUser } from '@coreui/icons';
 import { useLkh } from '../../context/LkhContext';
+import { FieldErrors, validateChangePasswordForm, validatePeriodForm } from '../../lib/validation';
 
 const padMonth = (month: number) => String(month).padStart(2, '0');
 
@@ -27,6 +28,9 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
   const [passwordModal, setPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState<FieldErrors>({});
+  const [periodErrors, setPeriodErrors] = useState<FieldErrors>({});
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
   const {
     user,
     month,
@@ -64,10 +68,21 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
   };
 
   const submitPassword = async () => {
+    const validation = validateChangePasswordForm({ currentPassword, nextPassword });
+    setPasswordErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await changePassword(currentPassword, nextPassword);
     setCurrentPassword('');
     setNextPassword('');
+    setPasswordErrors({});
     setPasswordModal(false);
+  };
+
+  const submitCreateMonth = () => {
+    const validation = validatePeriodForm(periodForm);
+    setPeriodErrors(validation.fieldErrors);
+    if (!validation.valid) return;
+    createMonth();
   };
 
   return (
@@ -110,15 +125,16 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
             {user?.name}
           </CButton>
 
-          <CButton color="secondary" variant="outline" title="Logout" onClick={logout}>
-            <CIcon icon={cilAccountLogout} />
-          </CButton>
-
           {canManage && month && (
             <CButton color={month.status === 'DRAFT' ? 'warning' : 'secondary'} variant="outline" title={month.status === 'DRAFT' ? 'Kunci periode' : 'Buka periode'} onClick={toggleLock}>
               <CIcon icon={month.status === 'DRAFT' ? cilLockLocked : cilLockUnlocked} />
             </CButton>
           )}
+
+          <CButton color="danger" variant="outline" title="Logout" onClick={() => setLogoutConfirm(true)}>
+            <CIcon icon={cilAccountLogout} className="me-2" />
+            Logout
+          </CButton>
         </CHeaderNav>
       </CContainer>
 
@@ -127,27 +143,47 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
           <div className="d-flex flex-column gap-2 rounded border border-warning-subtle bg-warning bg-opacity-10 p-3 flex-md-row">
             <CInputGroup>
               <CInputGroupText>Saldo awal</CInputGroupText>
-              <CFormInput value={periodForm.openingBalance} onChange={(event) => setOpeningBalance(event.target.value)} placeholder="0" />
+              <CFormInput value={periodForm.openingBalance} invalid={Boolean(periodErrors.openingBalance || periodErrors.period)} onChange={(event) => { setOpeningBalance(event.target.value); setPeriodErrors({}); }} placeholder="0" />
             </CInputGroup>
-            <CButton color="success" disabled={busy} onClick={createMonth} className="text-nowrap">
+            <CButton color="success" disabled={busy} onClick={submitCreateMonth} className="text-nowrap">
               <CIcon icon={cilPlus} className="me-2" />
               Buat Periode
             </CButton>
+            {(periodErrors.openingBalance || periodErrors.period) && <div className="invalid-feedback d-block">{periodErrors.openingBalance || periodErrors.period}</div>}
           </div>
         </CContainer>
       )}
 
-      <CModal visible={passwordModal} onClose={() => setPasswordModal(false)}>
+      <CModal visible={passwordModal} onClose={() => { setPasswordModal(false); setPasswordErrors({}); }}>
         <CModalHeader>
           <CModalTitle>Ubah Password</CModalTitle>
         </CModalHeader>
         <CModalBody className="d-grid gap-3">
-          <CFormInput type="password" label="Password saat ini" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
-          <CFormInput type="password" label="Password baru" value={nextPassword} onChange={(event) => setNextPassword(event.target.value)} />
+          <div>
+            <CFormInput type="password" label="Password saat ini" value={currentPassword} invalid={Boolean(passwordErrors.currentPassword)} onChange={(event) => { setCurrentPassword(event.target.value); setPasswordErrors({ ...passwordErrors, currentPassword: '' }); }} />
+            {passwordErrors.currentPassword && <div className="invalid-feedback d-block">{passwordErrors.currentPassword}</div>}
+          </div>
+          <div>
+            <CFormInput type="password" label="Password baru" value={nextPassword} invalid={Boolean(passwordErrors.nextPassword)} onChange={(event) => { setNextPassword(event.target.value); setPasswordErrors({ ...passwordErrors, nextPassword: '' }); }} />
+            {passwordErrors.nextPassword && <div className="invalid-feedback d-block">{passwordErrors.nextPassword}</div>}
+          </div>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" variant="outline" onClick={() => setPasswordModal(false)}>Batal</CButton>
           <CButton color="primary" disabled={busy || !currentPassword || !nextPassword} onClick={submitPassword}>Simpan</CButton>
+        </CModalFooter>
+      </CModal>
+
+      <CModal visible={logoutConfirm} onClose={() => setLogoutConfirm(false)}>
+        <CModalHeader>
+          <CModalTitle>Konfirmasi Logout</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          Keluar dari sesi pengguna saat ini?
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" variant="outline" onClick={() => setLogoutConfirm(false)}>Tidak</CButton>
+          <CButton color="danger" onClick={() => { setLogoutConfirm(false); logout(); }}>Ya, Logout</CButton>
         </CModalFooter>
       </CModal>
     </CHeader>

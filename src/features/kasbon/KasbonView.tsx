@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Filter, HandCoins, Plus, X } from 'lucide-react';
 import { MutedButton, PrimaryButton } from '../../components/ui/Button';
-import { SelectField, TextField } from '../../components/ui/Fields';
+import { FieldError, SelectField, TextField } from '../../components/ui/Fields';
 import { Panel } from '../../components/ui/Panel';
 import {
   DataTableShell,
@@ -16,6 +16,7 @@ import {
   TablePagination
 } from '../../components/ui/DataTable';
 import { rupiah } from '../../lib/format';
+import { FieldErrors, validateKasbonForm } from '../../lib/validation';
 import { CashAdvance, CashAdvanceFilters, CashAdvanceMeta, CashAdvanceStatus } from '../../types';
 
 type KasbonFormState = { date: string; person: string; description: string; amount: string };
@@ -66,9 +67,21 @@ export function KasbonView({
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
 }) {
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const changeForm = (next: KasbonFormState) => {
+    setErrors({});
+    onChange(next);
+  };
+  const saveForm = () => {
+    const validation = validateKasbonForm(form);
+    setErrors(validation.fieldErrors);
+    if (!validation.valid) return;
+    onSave();
+  };
+
   return (
     <Panel title="Kasbon" subtitle="Input, filter, bukti, dan status pelunasan kasbon." icon={<HandCoins size={18} />}>
-      <KasbonForm locked={locked} busy={busy} form={form} onChange={onChange} onSave={onSave} />
+      <KasbonForm locked={locked} busy={busy} form={form} errors={errors} onChange={changeForm} onSave={saveForm} />
       <KasbonFiltersBar filters={filters} onFiltersChange={onFiltersChange} />
       <KasbonBrowser
         items={items}
@@ -92,21 +105,35 @@ function KasbonForm({
   locked,
   busy,
   form,
+  errors,
   onChange,
   onSave
 }: {
   locked: boolean;
   busy: boolean;
   form: KasbonFormState;
+  errors: FieldErrors;
   onChange: (value: KasbonFormState) => void;
   onSave: () => void;
 }) {
   return (
     <div className="grid min-w-0 gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-slate-950/70 md:grid-cols-2 xl:grid-cols-[140px_180px_minmax(220px,1fr)] 2xl:grid-cols-[140px_180px_minmax(180px,1fr)_160px_auto]">
-      <TextField disabled={locked} type="date" value={form.date} onChange={(e) => onChange({ ...form, date: e.target.value })} />
-      <TextField disabled={locked} placeholder="Nama" value={form.person} onChange={(e) => onChange({ ...form, person: e.target.value })} />
-      <TextField disabled={locked} placeholder="Keterangan" value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
-      <TextField disabled={locked} placeholder="Nominal" value={form.amount} onChange={(e) => onChange({ ...form, amount: e.target.value })} />
+      <div>
+        <TextField disabled={locked} type="date" value={form.date} onChange={(e) => onChange({ ...form, date: e.target.value })} />
+        <FieldError message={errors.date} />
+      </div>
+      <div>
+        <TextField disabled={locked} placeholder="Nama" value={form.person} onChange={(e) => onChange({ ...form, person: e.target.value })} />
+        <FieldError message={errors.person} />
+      </div>
+      <div>
+        <TextField disabled={locked} placeholder="Keterangan" value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
+        <FieldError message={errors.description} />
+      </div>
+      <div>
+        <TextField disabled={locked} placeholder="Nominal" value={form.amount} onChange={(e) => onChange({ ...form, amount: e.target.value })} />
+        <FieldError message={errors.amount} />
+      </div>
       <PrimaryButton disabled={locked || busy} onClick={onSave}>
         <Plus size={16} />
         Tambah
@@ -193,6 +220,7 @@ function KasbonBrowser({
 }) {
   const [editingId, setEditingId] = useState('');
   const [editForm, setEditForm] = useState<KasbonEditState | null>(null);
+  const [editErrors, setEditErrors] = useState<FieldErrors>({});
   const [preview, setPreview] = useState<CashAdvance | null>(null);
 
   const startEdit = (item: CashAdvance) => {
@@ -204,17 +232,27 @@ function KasbonBrowser({
       amount: String(item.amount),
       status: item.status
     });
+    setEditErrors({});
   };
 
   const cancelEdit = () => {
     setEditingId('');
     setEditForm(null);
+    setEditErrors({});
   };
 
   const saveEdit = async () => {
     if (!editingId || !editForm) return;
+    const validation = validateKasbonForm(editForm);
+    setEditErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await onUpdate(editingId, editForm);
     cancelEdit();
+  };
+
+  const changeEditForm = (form: KasbonEditState) => {
+    setEditForm(form);
+    setEditErrors({});
   };
 
   const confirmDelete = (item: CashAdvance) => {
@@ -244,9 +282,10 @@ function KasbonBrowser({
                 key={item.id}
                 item={item}
                 editForm={editingId === item.id ? editForm : null}
+                editErrors={editingId === item.id ? editErrors : {}}
                 locked={locked}
                 busy={busy}
-                onEditFormChange={setEditForm}
+                onEditFormChange={changeEditForm}
                 onStartEdit={startEdit}
                 onSaveEdit={saveEdit}
                 onCancelEdit={cancelEdit}
@@ -268,9 +307,10 @@ function KasbonBrowser({
             key={item.id}
             item={item}
             editForm={editingId === item.id ? editForm : null}
+            editErrors={editingId === item.id ? editErrors : {}}
             locked={locked}
             busy={busy}
-            onEditFormChange={setEditForm}
+            onEditFormChange={changeEditForm}
             onStartEdit={startEdit}
             onSaveEdit={saveEdit}
             onCancelEdit={cancelEdit}
@@ -293,6 +333,7 @@ function KasbonBrowser({
 function KasbonTableRow({
   item,
   editForm,
+  editErrors,
   locked,
   busy,
   onEditFormChange,
@@ -307,6 +348,7 @@ function KasbonTableRow({
 }: {
   item: CashAdvance;
   editForm: KasbonEditState | null;
+  editErrors: FieldErrors;
   locked: boolean;
   busy: boolean;
   onEditFormChange: (form: KasbonEditState) => void;
@@ -324,23 +366,26 @@ function KasbonTableRow({
   return (
     <tr className="bg-white transition hover:bg-emerald-50/50 dark:bg-slate-900 dark:hover:bg-emerald-500/5">
       <td className="px-3 py-2.5 align-top font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
-        {editForm ? <TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} /> : item.date}
+        {editForm ? <><TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} /><FieldError message={editErrors.date} /></> : item.date}
       </td>
       <td className="break-words px-3 py-2.5 align-top font-black leading-snug">
-        {editForm ? <TextField value={editForm.person} onChange={(e) => onEditFormChange({ ...editForm, person: e.target.value })} /> : item.person}
+        {editForm ? <><TextField value={editForm.person} onChange={(e) => onEditFormChange({ ...editForm, person: e.target.value })} /><FieldError message={editErrors.person} /></> : item.person}
       </td>
       <td className="break-words px-3 py-2.5 align-top font-semibold leading-snug">
-        {editForm ? <TextField value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} /> : item.description}
+        {editForm ? <><TextField value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} /><FieldError message={editErrors.description} /></> : item.description}
       </td>
       <td className="px-3 py-2.5 align-top text-right">
-        {editForm ? <TextField value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} /> : <MoneyCell value={rupiah(item.amount)} />}
+        {editForm ? <><TextField value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} /><FieldError message={editErrors.amount} /></> : <MoneyCell value={rupiah(item.amount)} />}
       </td>
       <td className="px-3 py-2.5 align-top">
         {editForm ? (
+          <>
           <SelectField value={editForm.status} onChange={(e) => onEditFormChange({ ...editForm, status: e.target.value as CashAdvanceStatus })}>
             <option value="UNPAID">Belum lunas</option>
             <option value="PAID">Lunas</option>
           </SelectField>
+          <FieldError message={editErrors.status} />
+          </>
         ) : <StatusButton item={item} locked={locked || busy} onToggle={onToggle} />}
       </td>
       <td className="px-3 py-2.5 align-top">
@@ -364,6 +409,7 @@ function KasbonTableRow({
 function KasbonMobileCard({
   item,
   editForm,
+  editErrors,
   locked,
   busy,
   onEditFormChange,
@@ -378,6 +424,7 @@ function KasbonMobileCard({
 }: {
   item: CashAdvance;
   editForm: KasbonEditState | null;
+  editErrors: FieldErrors;
   locked: boolean;
   busy: boolean;
   onEditFormChange: (form: KasbonEditState) => void;
@@ -395,13 +442,18 @@ function KasbonMobileCard({
       <div className="rounded-md border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-slate-900">
         <div className="grid gap-2">
           <TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} />
+          <FieldError message={editErrors.date} />
           <TextField placeholder="Nama" value={editForm.person} onChange={(e) => onEditFormChange({ ...editForm, person: e.target.value })} />
+          <FieldError message={editErrors.person} />
           <TextField placeholder="Keterangan" value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} />
+          <FieldError message={editErrors.description} />
           <TextField placeholder="Nominal" value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} />
+          <FieldError message={editErrors.amount} />
           <SelectField value={editForm.status} onChange={(e) => onEditFormChange({ ...editForm, status: e.target.value as CashAdvanceStatus })}>
             <option value="UNPAID">Belum lunas</option>
             <option value="PAID">Lunas</option>
           </SelectField>
+          <FieldError message={editErrors.status} />
         </div>
         <InlineEditActions busy={busy} onCancel={onCancelEdit} onSave={onSaveEdit} />
       </div>

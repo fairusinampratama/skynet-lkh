@@ -10,6 +10,9 @@ export interface Month {
   year: number;
   month: number;
   openingBalance: number;
+  reportedClosingBalance?: number | null;
+  reportedCashAdvanceTotal?: number | null;
+  reportedCashOnHand?: number | null;
   status: MonthStatus;
 }
 
@@ -43,6 +46,9 @@ export interface LedgerEntry {
   category: Category | null;
   type: EntryType;
   amount: number;
+  spreadsheetBalance?: number | null;
+  dashboardIncluded?: boolean;
+  spreadsheetSection?: number | null;
   runningBalance: number;
   source?: string;
   synthetic?: boolean;
@@ -97,9 +103,15 @@ export interface CashAdvance {
 export interface Summary {
   openingBalance: number;
   ledgerCount: number;
+  dashboardLedgerCount?: number;
   totalIncome: number;
   totalExpense: number;
   closingBalance: number;
+  computedClosingBalance?: number;
+  balanceSource?: 'spreadsheet' | 'computed';
+  cashOnHand?: number;
+  reportedCashAdvanceTotal?: number | null;
+  actualOutstandingKasbon?: number;
   outstandingKasbon: number;
   outstandingKasbonCount: number;
   byCategory: Array<{ name: string; amount: number }>;

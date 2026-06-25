@@ -480,6 +480,9 @@ describe('LKH API and DB integration', () => {
 
   it('imports the June sheet CSV through cutoff and preserves known totals', async () => {
     const month = await createJune();
+    await prisma.cashAdvance.create({
+      data: { id: 'stale-kasbon', monthId: month.id, date: new Date('2026-06-01'), person: 'Old', description: 'Old kasbon', amount: 1000000 }
+    });
     await request(app).get('/api/bootstrap').expect(200);
     const csv = [
       'Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo',
@@ -490,15 +493,21 @@ describe('LKH API and DB integration', () => {
       '11-juni,9,Bi sangu,sangu,,50000,"3,531,761"',
       '12-juni,10,Should not import,Material,,10000,"3,521,761"',
       ',,,,0,0,0',
-      '02- juni,,cod nia,,,"23,000",'
+      '02- juni,,cod nia,,,"23,000",',
+      ',,Rincian Kas Bon,,,,',
+      '02-juni,,Kasbon Dafa BBM,,,"75,000",',
+      '12-juni,,Kasbon Dafa Makan,,,"25,000",'
     ].join('\n');
 
     const res = await request(app).post(`/api/months/${month.id}/import-csv`).send({ csv, cutoff: '2026-06-11' }).expect(200);
     expect(res.body.imported).toBe(3);
+    expect(res.body.kasbonImported).toBe(1);
     const payload = await request(app).get(`/api/months/${month.id}`).expect(200);
     expect(payload.body.summary.totalIncome).toBe(2000000);
     expect(payload.body.summary.totalExpense).toBe(65000);
     expect(payload.body.summary.closingBalance).toBe(3531761);
+    expect(payload.body.cashAdvances).toHaveLength(1);
+    expect(payload.body.cashAdvances[0]).toMatchObject({ person: 'Dafa Bbm', description: 'Kasbon Dafa BBM', amount: 75000, status: 'UNPAID' });
   });
 
   it('cascades month deletion to ledger and kasbon records', async () => {

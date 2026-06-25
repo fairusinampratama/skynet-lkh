@@ -21,6 +21,7 @@ import {
 import { Navigate } from 'react-router-dom';
 import { Plus, RotateCcw, UserX } from 'lucide-react';
 import { useLkh } from '../../context/LkhContext';
+import { FieldErrors, validateCreateUserForm, validateResetPasswordForm, validateUpdateUserForm } from '../../lib/validation';
 import { User, UserRole } from '../../types';
 
 type UserForm = { username: string; name: string; role: UserRole; password: string; active: boolean };
@@ -34,6 +35,8 @@ export default function UsersPage() {
   const [editing, setEditing] = useState<User | null>(null);
   const [resetting, setResetting] = useState<User | null>(null);
   const [resetPassword, setResetPassword] = useState('');
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [resetErrors, setResetErrors] = useState<FieldErrors>({});
 
   const refresh = async () => setUsers(await loadUsers());
 
@@ -44,29 +47,42 @@ export default function UsersPage() {
   if (!canManage) return <Navigate to="/dashboard" replace />;
 
   const saveCreate = async () => {
+    const validation = validateCreateUserForm(form);
+    setErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await createUser(form);
     setForm(emptyForm);
+    setErrors({});
     await refresh();
   };
 
   const saveEdit = async () => {
     if (!editing) return;
+    const validation = validateUpdateUserForm(form);
+    setErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await updateUser(editing.id, form);
     setEditing(null);
     setForm(emptyForm);
+    setErrors({});
     await refresh();
   };
 
   const openEdit = (item: User) => {
     setEditing(item);
     setForm({ username: item.username, name: item.name, role: item.role, password: '', active: item.active });
+    setErrors({});
   };
 
   const saveReset = async () => {
     if (!resetting) return;
+    const validation = validateResetPasswordForm({ password: resetPassword });
+    setResetErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await resetUserPassword(resetting.id, resetPassword);
     setResetting(null);
     setResetPassword('');
+    setResetErrors({});
     await refresh();
   };
 
@@ -81,19 +97,31 @@ export default function UsersPage() {
             </div>
           </div>
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[160px_180px_130px_180px_auto]">
-            <CFormInput placeholder="Username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
-            <CFormInput placeholder="Nama" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-            <CFormSelect value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole })}>
-              <option value="READER">Reader</option>
-              <option value="ADMIN">Admin</option>
-            </CFormSelect>
-            <CFormInput type="password" placeholder={editing ? 'Kosongkan' : 'Password'} value={form.password} disabled={Boolean(editing)} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+            <div>
+              <CFormInput placeholder="Username" value={form.username} invalid={Boolean(errors.username)} onChange={(event) => { setForm({ ...form, username: event.target.value }); setErrors({ ...errors, username: '' }); }} />
+              {errors.username && <div className="invalid-feedback d-block">{errors.username}</div>}
+            </div>
+            <div>
+              <CFormInput placeholder="Nama" value={form.name} invalid={Boolean(errors.name)} onChange={(event) => { setForm({ ...form, name: event.target.value }); setErrors({ ...errors, name: '' }); }} />
+              {errors.name && <div className="invalid-feedback d-block">{errors.name}</div>}
+            </div>
+            <div>
+              <CFormSelect value={form.role} invalid={Boolean(errors.role)} onChange={(event) => { setForm({ ...form, role: event.target.value as UserRole }); setErrors({ ...errors, role: '' }); }}>
+                <option value="READER">Reader</option>
+                <option value="ADMIN">Admin</option>
+              </CFormSelect>
+              {errors.role && <div className="invalid-feedback d-block">{errors.role}</div>}
+            </div>
+            <div>
+              <CFormInput type="password" placeholder={editing ? 'Kosongkan' : 'Password'} value={form.password} disabled={Boolean(editing)} invalid={Boolean(errors.password)} onChange={(event) => { setForm({ ...form, password: event.target.value }); setErrors({ ...errors, password: '' }); }} />
+              {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
+            </div>
             <CButton color={editing ? 'primary' : 'success'} disabled={busy || !form.username || !form.name || (!editing && !form.password)} onClick={editing ? saveEdit : saveCreate}>
               <Plus size={16} className="me-2" />
               {editing ? 'Simpan' : 'Tambah'}
             </CButton>
           </div>
-          {editing && <CButton color="secondary" variant="outline" className="mt-2" onClick={() => { setEditing(null); setForm(emptyForm); }}>Batal edit</CButton>}
+          {editing && <CButton color="secondary" variant="outline" className="mt-2" onClick={() => { setEditing(null); setForm(emptyForm); setErrors({}); }}>Batal edit</CButton>}
         </CCardBody>
       </CCard>
 
@@ -134,10 +162,11 @@ export default function UsersPage() {
         </CCardBody>
       </CCard>
 
-      <CModal visible={Boolean(resetting)} onClose={() => setResetting(null)}>
+      <CModal visible={Boolean(resetting)} onClose={() => { setResetting(null); setResetErrors({}); }}>
         <CModalHeader><CModalTitle>Reset Password</CModalTitle></CModalHeader>
         <CModalBody>
-          <CFormInput type="password" label={`Password baru untuk ${resetting?.username || ''}`} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} />
+          <CFormInput type="password" label={`Password baru untuk ${resetting?.username || ''}`} value={resetPassword} invalid={Boolean(resetErrors.password)} onChange={(event) => { setResetPassword(event.target.value); setResetErrors({ password: '' }); }} />
+          {resetErrors.password && <div className="invalid-feedback d-block">{resetErrors.password}</div>}
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" variant="outline" onClick={() => setResetting(null)}>Batal</CButton>

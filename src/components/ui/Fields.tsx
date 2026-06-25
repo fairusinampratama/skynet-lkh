@@ -30,3 +30,8 @@ export function SelectField({ tone = 'default', className = '', children, ...pro
     </div>
   );
 }
+
+export function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <div className="mt-1 text-xs font-semibold text-rose-600 dark:text-rose-300">{message}</div>;
+}

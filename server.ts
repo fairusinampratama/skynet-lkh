@@ -7,10 +7,28 @@ import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 import multer from "multer";
 import ExcelJS from "exceljs";
-import { parseLkhLedgerCsv } from "./src/lib/lkhImport";
+import { parseLkhCashAdvances, parseLkhLedgerCsv } from "./src/lib/lkhImport";
 import argon2 from "argon2";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import {
+  MAX_PROOF_IMAGE_SIZE,
+  PROOF_MIME_EXTENSIONS,
+  FieldErrors,
+  parseAmount as sharedParseAmount,
+  validateCashAdvanceStatus,
+  validateChangePasswordForm,
+  validateCreateUserForm,
+  validateKasbonForm,
+  validateLedgerForm,
+  validateLoginForm,
+  validateMonthStatus,
+  validatePasswordPolicy as sharedValidatePasswordPolicy,
+  validatePeriodForm,
+  validateProofFile,
+  validateResetPasswordForm,
+  validateUpdateUserForm
+} from "./src/lib/validation";
 
 dotenv.config();
 
@@ -66,28 +84,10 @@ const clampPageLimit = (value: unknown) => {
   return [25, 50, 100].includes(limit) ? limit : 25;
 };
 const positivePage = (value: unknown) => Math.max(1, Number(value) || 1);
-const PROOF_MIME_EXTENSIONS: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp"
-};
-const MAX_PROOF_IMAGE_SIZE = 5 * 1024 * 1024;
 const SESSION_COOKIE = "lkh_session";
 const SESSION_HOURS = 8;
 
-export function parseAmount(value: unknown): number {
-  if (typeof value === "number") return value;
-  let cleaned = String(value || "").trim().replace(/[^\d.,-]/g, "");
-  if (cleaned.includes(",") && cleaned.includes(".")) {
-    cleaned = cleaned.replace(/,/g, "");
-  } else if (cleaned.includes(",")) {
-    cleaned = cleaned.replace(/,/g, "");
-  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(cleaned)) {
-    cleaned = cleaned.replace(/\./g, "");
-  }
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
+export const parseAmount = sharedParseAmount;
 
 export function parseCsv(input: string): string[][] {
   const rows: string[][] = [];
@@ -164,8 +164,9 @@ export function computeLedger(month: any, entries: any[]) {
     .sort((a, b) => `${dateOnly(a.date)}-${a.createdAt}`.localeCompare(`${dateOnly(b.date)}-${b.createdAt}`))
     .map((entry) => {
       const amount = toNumber(entry.amount);
+      const spreadsheetBalance = entry.spreadsheetBalance === null || entry.spreadsheetBalance === undefined ? null : toNumber(entry.spreadsheetBalance);
       balance += entry.type === "INCOME" ? amount : -amount;
-      return { ...entry, date: dateOnly(entry.date), amount, runningBalance: balance };
+      return { ...entry, date: dateOnly(entry.date), amount, spreadsheetBalance, runningBalance: balance };
     });
 }
 
@@ -197,15 +198,22 @@ function withOpeningBalanceRow(month: any, ledger: any[]) {
 }
 
 export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
-  const totalIncome = ledger.filter((entry) => entry.type === "INCOME").reduce((sum, entry) => sum + entry.amount, 0);
-  const totalExpense = ledger.filter((entry) => entry.type === "EXPENSE").reduce((sum, entry) => sum + entry.amount, 0);
-  const outstandingKasbon = cashAdvances
+  const dashboardLedger = ledger.filter((entry) => entry.dashboardIncluded !== false);
+  const computedIncome = dashboardLedger.filter((entry) => entry.type === "INCOME").reduce((sum, entry) => sum + entry.amount, 0);
+  const computedExpense = dashboardLedger.filter((entry) => entry.type === "EXPENSE").reduce((sum, entry) => sum + entry.amount, 0);
+  const totalIncome = computedIncome;
+  const totalExpense = computedExpense;
+  const computedClosingBalance = toNumber(month.openingBalance) + computedIncome - computedExpense;
+  const reportedCashAdvanceTotal = month.reportedCashAdvanceTotal === null || month.reportedCashAdvanceTotal === undefined ? null : toNumber(month.reportedCashAdvanceTotal);
+  const closingBalance = computedClosingBalance;
+  const actualOutstandingKasbon = cashAdvances
     .filter((item) => item.status === "UNPAID")
     .reduce((sum, item) => sum + toNumber(item.amount), 0);
+  const outstandingKasbon = actualOutstandingKasbon;
   const outstandingKasbonCount = cashAdvances.filter((item) => item.status === "UNPAID").length;
   const byCategory = new Map<string, number>();
   const byDay = new Map<string, { income: number; expense: number }>();
-  for (const entry of ledger) {
+  for (const entry of dashboardLedger) {
     const day = entry.date;
     const daily = byDay.get(day) || { income: 0, expense: 0 };
     if (entry.type === "INCOME") daily.income += entry.amount;
@@ -218,9 +226,19 @@ export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
   return {
     openingBalance: toNumber(month.openingBalance),
     ledgerCount: ledger.length,
+    dashboardLedgerCount: dashboardLedger.length,
     totalIncome,
     totalExpense,
-    closingBalance: toNumber(month.openingBalance) + totalIncome - totalExpense,
+    computedIncome,
+    computedExpense,
+    incomeSource: "computed",
+    expenseSource: "computed",
+    closingBalance,
+    computedClosingBalance,
+    balanceSource: "computed",
+    cashOnHand: closingBalance - outstandingKasbon,
+    reportedCashAdvanceTotal,
+    actualOutstandingKasbon,
     outstandingKasbon,
     outstandingKasbonCount,
     byCategory: [...byCategory.entries()].map(([name, amount]) => ({ name, amount })),
@@ -246,11 +264,7 @@ function publicUser(user: AuthUser) {
   };
 }
 
-export function validatePasswordPolicy(password: string) {
-  if (password.length < 8) return "Password minimal 8 karakter.";
-  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return "Password harus mengandung huruf dan angka.";
-  return null;
-}
+export const validatePasswordPolicy = sharedValidatePasswordPolicy;
 
 function hashSessionToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -264,31 +278,14 @@ function sessionExpiry() {
   return new Date(Date.now() + SESSION_HOURS * 60 * 60 * 1000);
 }
 
-function cookieOptions() {
+function cookieOptions(req?: express.Request) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" ? (req ? req.secure : false) : false,
     path: "/",
     maxAge: SESSION_HOURS * 60 * 60 * 1000
   };
-}
-
-function validateRole(value: unknown): UserRole {
-  if (value === "ADMIN" || value === "READER") return value;
-  throw new Error("Role pengguna tidak valid.");
-}
-
-function validateUsername(value: unknown) {
-  const username = String(value || "").trim().toLowerCase();
-  if (!/^[a-z0-9._-]{3,40}$/.test(username)) throw new Error("Username harus 3-40 karakter dan hanya boleh huruf, angka, titik, underscore, atau strip.");
-  return username;
-}
-
-function validateName(value: unknown) {
-  const name = String(value || "").trim().replace(/\s+/g, " ");
-  if (name.length < 2 || name.length > 80) throw new Error("Nama pengguna harus 2-80 karakter.");
-  return name;
 }
 
 function formatExportFileName(month: any) {
@@ -345,7 +342,7 @@ export async function buildMonthWorkbook(payload: any) {
     { metric: "Total Keluar", value: summary.totalExpense },
     { metric: "Saldo Akhir", value: summary.closingBalance },
     { metric: "Kasbon Aktif", value: summary.outstandingKasbon },
-    { metric: "Saldo Bersih", value: summary.closingBalance - summary.outstandingKasbon },
+    { metric: "Saldo Tunai", value: summary.cashOnHand },
     { metric: "Total Transaksi", value: summary.ledgerCount },
     { metric: "Kasbon Belum Lunas", value: summary.outstandingKasbonCount }
   ]);
@@ -427,6 +424,7 @@ export async function buildMonthWorkbook(payload: any) {
 
 export async function createApp(options: { prisma?: PrismaClient; serveFrontend?: boolean; auth?: boolean } = {}) {
   const app = express();
+  app.set("trust proxy", 1);
   const DATA_DIR = process.env.DATA_DIR || process.cwd();
   const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
   const LEDGER_PROOF_DIR = path.join(UPLOAD_DIR, "ledger-proofs");
@@ -452,6 +450,18 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     if (!prisma) throw new Error("DATABASE_URL belum diatur.");
     return prisma as any;
   };
+
+  const firstValidationError = (fieldErrors: FieldErrors, fallback = "Input tidak valid.") => Object.values(fieldErrors)[0] || fallback;
+  const throwValidation = (fieldErrors: FieldErrors, fallback?: string): never => {
+    const error: any = new Error(firstValidationError(fieldErrors, fallback));
+    error.fieldErrors = fieldErrors;
+    throw error;
+  };
+  const validationErrorPayload = (error: any) => ({
+    success: false,
+    error: error.message,
+    ...(error.fieldErrors ? { fieldErrors: error.fieldErrors } : {})
+  });
 
   async function seedCategories() {
     await Promise.all(DEFAULT_CATEGORIES.map((category) => db().category.upsert({
@@ -482,7 +492,18 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       proofImageUrl: item.proofImagePath ? `/uploads/${item.proofImagePath}` : null
     }));
     const { ledgerEntries: _ledgerEntries, cashAdvances: _cashAdvances, ...cleanMonth } = month;
-    return { month: { ...cleanMonth, openingBalance: toNumber(month.openingBalance) }, ledger, cashAdvances, summary: summarize(month, realLedger, cashAdvances) };
+    return {
+      month: {
+        ...cleanMonth,
+        openingBalance: toNumber(month.openingBalance),
+        reportedClosingBalance: month.reportedClosingBalance === null ? null : toNumber(month.reportedClosingBalance),
+        reportedCashAdvanceTotal: month.reportedCashAdvanceTotal === null ? null : toNumber(month.reportedCashAdvanceTotal),
+        reportedCashOnHand: month.reportedCashOnHand === null ? null : toNumber(month.reportedCashOnHand)
+      },
+      ledger,
+      cashAdvances,
+      summary: summarize(month, realLedger, cashAdvances)
+    };
   }
 
   async function getMonthSummaryPayload(monthId: string) {
@@ -643,7 +664,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     next();
   };
 
-  async function createSession(res: express.Response, userId: string) {
+  async function createSession(req: express.Request, res: express.Response, userId: string) {
     const token = createSessionToken();
     await db().session.create({
       data: {
@@ -653,7 +674,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
         expiresAt: sessionExpiry()
       }
     });
-    res.cookie(SESSION_COOKIE, token, cookieOptions());
+    res.cookie(SESSION_COOKIE, token, cookieOptions(req));
   }
 
   app.use(cookieParser());
@@ -674,17 +695,18 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
 
   app.post("/api/auth/login", loginLimiter, async (req, res) => {
     try {
-      const username = validateUsername(req.body.username);
-      const password = String(req.body.password || "");
+      const validation = validateLoginForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { username, password } = validation.values!;
       const user = await db().user.findUnique({ where: { username } });
       if (!user || !user.active || !(await argon2.verify(user.passwordHash, password))) {
         throw new Error("Username atau password salah.");
       }
       await db().session.deleteMany({ where: { userId: user.id, expiresAt: { lt: new Date() } } });
-      await createSession(res, user.id);
+      await createSession(req, res, user.id);
       res.json({ success: true, user: publicUser(user) });
     } catch (error: any) {
-      res.status(401).json({ success: false, error: error.message });
+      res.status(401).json(validationErrorPayload(error));
     }
   });
 
@@ -701,10 +723,9 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
 
   app.post("/api/auth/change-password", requireAuth, async (req, res) => {
     try {
-      const currentPassword = String(req.body.currentPassword || "");
-      const nextPassword = String(req.body.nextPassword || "");
-      const policyError = validatePasswordPolicy(nextPassword);
-      if (policyError) throw new Error(policyError);
+      const validation = validateChangePasswordForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { currentPassword, nextPassword } = validation.values!;
       const authUser = (req as any).user as AuthUser;
       const user = await db().user.findUniqueOrThrow({ where: { id: authUser.id } });
       if (!(await argon2.verify(user.passwordHash, currentPassword))) throw new Error("Password saat ini salah.");
@@ -712,7 +733,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       await db().session.deleteMany({ where: { userId: user.id, tokenHash: { not: hashSessionToken(req.cookies?.[SESSION_COOKIE] || "") } } });
       res.json({ success: true });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -726,12 +747,9 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
 
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
-      const username = validateUsername(req.body.username);
-      const name = validateName(req.body.name);
-      const role = validateRole(req.body.role);
-      const password = String(req.body.password || "");
-      const policyError = validatePasswordPolicy(password);
-      if (policyError) throw new Error(policyError);
+      const validation = validateCreateUserForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { username, name, role, password } = validation.values!;
       const user = await db().user.create({
         data: {
           id: id("user"),
@@ -743,21 +761,22 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       });
       res.json({ success: true, user: publicUser(user) });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
   app.put("/api/users/:userId", requireAdmin, async (req, res) => {
     try {
       const authUser = (req as any).user as AuthUser;
-      const role = validateRole(req.body.role);
-      const active = Boolean(req.body.active);
+      const validation = validateUpdateUserForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { username, name, role, active } = validation.values!;
       if (authUser.id === req.params.userId && (!active || role !== "ADMIN")) throw new Error("Admin tidak dapat menonaktifkan atau menurunkan role akun sendiri.");
       const user = await db().user.update({
         where: { id: req.params.userId },
         data: {
-          username: validateUsername(req.body.username),
-          name: validateName(req.body.name),
+          username,
+          name,
           role,
           active
         }
@@ -765,15 +784,15 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       if (!user.active) await db().session.deleteMany({ where: { userId: user.id } });
       res.json({ success: true, user: publicUser(user) });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
   app.post("/api/users/:userId/reset-password", requireAdmin, async (req, res) => {
     try {
-      const password = String(req.body.password || "");
-      const policyError = validatePasswordPolicy(password);
-      if (policyError) throw new Error(policyError);
+      const validation = validateResetPasswordForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { password } = validation.values!;
       const user = await db().user.update({
         where: { id: req.params.userId },
         data: { passwordHash: await argon2.hash(password) }
@@ -781,7 +800,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       await db().session.deleteMany({ where: { userId: user.id } });
       res.json({ success: true, user: publicUser(user) });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -805,7 +824,17 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
         db().month.findMany({ orderBy: [{ year: "desc" }, { month: "desc" }] }),
         db().category.findMany({ orderBy: [{ kind: "asc" }, { name: "asc" }] })
       ]);
-      res.json({ success: true, months: months.map((m: any) => ({ ...m, openingBalance: toNumber(m.openingBalance) })), categories });
+      res.json({
+        success: true,
+        months: months.map((m: any) => ({
+          ...m,
+          openingBalance: toNumber(m.openingBalance),
+          reportedClosingBalance: m.reportedClosingBalance === null ? null : toNumber(m.reportedClosingBalance),
+          reportedCashAdvanceTotal: m.reportedCashAdvanceTotal === null ? null : toNumber(m.reportedCashAdvanceTotal),
+          reportedCashOnHand: m.reportedCashOnHand === null ? null : toNumber(m.reportedCashOnHand)
+        })),
+        categories
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -813,10 +842,9 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
 
   app.post("/api/months", requireAdmin, async (req, res) => {
     try {
-      const year = Number(req.body.year);
-      const monthNumber = Number(req.body.month);
-      const openingBalance = parseAmount(req.body.openingBalance);
-      if (!year || monthNumber < 1 || monthNumber > 12) throw new Error("Tahun atau bulan tidak valid.");
+      const validation = validatePeriodForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { year, month: monthNumber, openingBalance } = validation.values!;
       const month = await db().month.upsert({
         where: { year_month: { year, month: monthNumber } },
         create: {
@@ -831,7 +859,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       });
       res.json({ success: true, month: { ...month, openingBalance: toNumber(month.openingBalance) } });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -883,15 +911,13 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const data: any = {};
       if (req.body.status) {
-        const status = req.body.status as MonthStatus;
-        if (!["DRAFT", "LOCKED", "ARCHIVED"].includes(status)) throw new Error("Status bulan tidak valid.");
-        data.status = status;
+        data.status = validateMonthStatus(req.body.status) as MonthStatus;
       }
       if (!Object.keys(data).length) throw new Error("Tidak ada perubahan.");
       const month = await db().month.update({ where: { id: req.params.monthId }, data });
       res.json({ success: true, month });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -899,25 +925,24 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const month = await db().month.findUnique({ where: { id: req.params.monthId } });
       if (!month || month.status !== "DRAFT") throw new Error("Bulan terkunci atau tidak ditemukan.");
-      const amount = parseAmount(req.body.amount);
-      if (!amount || amount <= 0) throw new Error("Nominal harus lebih dari 0.");
-      const type = req.body.type as EntryType;
-      if (!["INCOME", "EXPENSE"].includes(type)) throw new Error("Tipe transaksi tidak valid.");
+      const validation = validateLedgerForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { date, proofNo, description, categoryId, type, amount } = validation.values!;
       const entry = await db().ledgerEntry.create({
         data: {
           id: id("entry"),
           monthId: req.params.monthId,
-          date: new Date(req.body.date),
-          proofNo: req.body.proofNo || null,
-          description: String(req.body.description || "").trim(),
-          categoryId: req.body.categoryId,
+          date: new Date(date),
+          proofNo: proofNo || null,
+          description,
+          categoryId,
           type,
           amount
         }
       });
       res.json({ success: true, entry });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -925,24 +950,23 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const existing = await db().ledgerEntry.findUnique({ where: { id: req.params.entryId }, include: { month: true } });
       if (!existing || existing.month.status !== "DRAFT") throw new Error("Transaksi tidak dapat diubah.");
-      const amount = parseAmount(req.body.amount);
-      if (!amount || amount <= 0) throw new Error("Nominal harus lebih dari 0.");
-      const type = req.body.type as EntryType;
-      if (!["INCOME", "EXPENSE"].includes(type)) throw new Error("Tipe transaksi tidak valid.");
+      const validation = validateLedgerForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { date, proofNo, description, categoryId, type, amount } = validation.values!;
       const entry = await db().ledgerEntry.update({
         where: { id: req.params.entryId },
         data: {
-          date: new Date(req.body.date),
-          proofNo: req.body.proofNo || null,
-          description: String(req.body.description || "").trim(),
-          categoryId: req.body.categoryId,
+          date: new Date(date),
+          proofNo: proofNo || null,
+          description,
+          categoryId,
           type,
           amount
         }
       });
       res.json({ success: true, entry });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -964,6 +988,8 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       try {
         if (uploadError) throw uploadError;
         if (!req.file) throw new Error("File bukti wajib diunggah.");
+        const validation = validateProofFile(req.file);
+        if (!validation.valid) throwValidation(validation.fieldErrors);
         const existing = await db().ledgerEntry.findUnique({ where: { id: req.params.entryId }, include: { month: true } });
         if (!existing || existing.month.status !== "DRAFT") throw new Error("Bukti transaksi tidak dapat diubah.");
         nextProofPath = await writeProofFile(req.file);
@@ -980,7 +1006,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
         res.json({ success: true, entry: { ...entry, amount: toNumber(entry.amount), proofImageUrl: proofUrl(entry) } });
       } catch (error: any) {
         await removeProofFile(nextProofPath);
-        res.status(400).json({ success: false, error: error.message });
+        res.status(400).json(validationErrorPayload(error));
       }
     });
   });
@@ -1009,24 +1035,23 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const month = await db().month.findUnique({ where: { id: req.params.monthId } });
       if (!month || month.status !== "DRAFT") throw new Error("Bulan terkunci atau tidak ditemukan.");
-      const amount = parseAmount(req.body.amount);
-      if (!amount || amount <= 0) throw new Error("Nominal kasbon harus lebih dari 0.");
-      const status = (req.body.status || "UNPAID") as CashAdvanceStatus;
-      if (!["UNPAID", "PAID"].includes(status)) throw new Error("Status kasbon tidak valid.");
+      const validation = validateKasbonForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { date, person, description, amount, status } = validation.values!;
       const item = await db().cashAdvance.create({
         data: {
           id: id("kasbon"),
           monthId: req.params.monthId,
-          date: new Date(req.body.date),
-          person: String(req.body.person || "").trim(),
-          description: String(req.body.description || "").trim(),
+          date: new Date(date),
+          person,
+          description,
           amount,
           status
         }
       });
       res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -1034,15 +1059,14 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const existing = await db().cashAdvance.findUnique({ where: { id: req.params.cashAdvanceId }, include: { month: true } });
       if (!existing || existing.month.status !== "DRAFT") throw new Error("Kasbon tidak dapat diubah.");
-      const status = req.body.status as CashAdvanceStatus;
-      if (!["UNPAID", "PAID"].includes(status)) throw new Error("Status kasbon tidak valid.");
+      const status = validateCashAdvanceStatus(req.body.status);
       const item = await db().cashAdvance.update({
         where: { id: req.params.cashAdvanceId },
         data: { status }
       });
       res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -1050,23 +1074,22 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const existing = await db().cashAdvance.findUnique({ where: { id: req.params.cashAdvanceId }, include: { month: true } });
       if (!existing || existing.month.status !== "DRAFT") throw new Error("Kasbon tidak dapat diubah.");
-      const amount = parseAmount(req.body.amount);
-      if (!amount || amount <= 0) throw new Error("Nominal kasbon harus lebih dari 0.");
-      const status = req.body.status as CashAdvanceStatus;
-      if (!["UNPAID", "PAID"].includes(status)) throw new Error("Status kasbon tidak valid.");
+      const validation = validateKasbonForm(req.body);
+      if (!validation.valid) throwValidation(validation.fieldErrors);
+      const { date, person, description, amount, status } = validation.values!;
       const item = await db().cashAdvance.update({
         where: { id: req.params.cashAdvanceId },
         data: {
-          date: new Date(req.body.date),
-          person: String(req.body.person || "").trim(),
-          description: String(req.body.description || "").trim(),
+          date: new Date(date),
+          person,
+          description,
           amount,
           status
         }
       });
       res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
     } catch (error: any) {
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json(validationErrorPayload(error));
     }
   });
 
@@ -1088,6 +1111,8 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       try {
         if (uploadError) throw uploadError;
         if (!req.file) throw new Error("File bukti wajib diunggah.");
+        const validation = validateProofFile(req.file);
+        if (!validation.valid) throwValidation(validation.fieldErrors);
         const existing = await db().cashAdvance.findUnique({ where: { id: req.params.cashAdvanceId }, include: { month: true } });
         if (!existing || existing.month.status !== "DRAFT") throw new Error("Bukti kasbon tidak dapat diubah.");
         nextProofPath = await writeProofFile(req.file, "kasbon-proofs");
@@ -1104,7 +1129,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
         res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
       } catch (error: any) {
         await removeProofFile(nextProofPath);
-        res.status(400).json({ success: false, error: error.message });
+        res.status(400).json(validationErrorPayload(error));
       }
     });
   });
@@ -1137,10 +1162,20 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       const cutoff = String(req.body.cutoff || `${month.year}-${String(month.month).padStart(2, "0")}-31`);
       const parsed = parseLkhLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate }, { year: month.year, month: month.month });
       const importRows = parsed.rows.filter((row) => row.date <= cutoff);
+      const cashAdvances = parseLkhCashAdvances(csv, { parseCsv, parseAmount, parseIndonesianDate }, { year: month.year, month: month.month })
+        .filter((item) => item.date <= cutoff);
       const categories = await db().category.findMany();
       const byNameKind = new Map(categories.map((cat: any) => [`${cat.kind}:${cat.name.toLowerCase()}`, cat]));
       await db().$transaction(async (tx: any) => {
-        await tx.month.update({ where: { id: req.params.monthId }, data: { openingBalance: parsed.openingBalance } });
+        await tx.month.update({
+          where: { id: req.params.monthId },
+          data: {
+            openingBalance: parsed.openingBalance,
+            reportedClosingBalance: parsed.reportedClosingBalance,
+            reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+            reportedCashOnHand: parsed.reportedCashOnHand
+          }
+        });
         const seenIds: string[] = [];
         for (const row of importRows) {
           const key = `${row.categoryKind}:${row.categoryName.toLowerCase()}`;
@@ -1164,6 +1199,9 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
               categoryId: category.id,
               type: row.type,
               amount: row.amount,
+              spreadsheetBalance: row.balance || null,
+              dashboardIncluded: row.dashboardIncluded,
+              spreadsheetSection: row.sectionIndex,
               source: "spreadsheet-import"
             },
             update: {
@@ -1173,6 +1211,9 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
               categoryId: category.id,
               type: row.type,
               amount: row.amount,
+              spreadsheetBalance: row.balance || null,
+              dashboardIncluded: row.dashboardIncluded,
+              spreadsheetSection: row.sectionIndex,
               source: "spreadsheet-import"
             }
           });
@@ -1184,8 +1225,45 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
             id: { notIn: seenIds }
           }
         });
+        const seenCashAdvanceIds = cashAdvances.map((item) => item.id);
+        for (const item of cashAdvances) {
+          await tx.cashAdvance.upsert({
+            where: { id: item.id },
+            create: {
+              id: item.id,
+              monthId: req.params.monthId,
+              date: new Date(item.date),
+              person: item.person,
+              description: item.description,
+              amount: item.amount,
+              status: item.status
+            },
+            update: {
+              date: new Date(item.date),
+              person: item.person,
+              description: item.description,
+              amount: item.amount,
+              status: item.status
+            }
+          });
+        }
+        await tx.cashAdvance.deleteMany({
+          where: {
+            monthId: req.params.monthId,
+            id: { notIn: seenCashAdvanceIds }
+          }
+        });
       });
-      res.json({ success: true, imported: importRows.length, openingBalance: parsed.openingBalance, warnings: parsed.warnings });
+      res.json({
+        success: true,
+        imported: importRows.length,
+        kasbonImported: cashAdvances.length,
+        openingBalance: parsed.openingBalance,
+        reportedClosingBalance: parsed.reportedClosingBalance,
+        reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+        reportedCashOnHand: parsed.reportedCashOnHand,
+        warnings: parsed.warnings
+      });
     } catch (error: any) {
       res.status(400).json({ success: false, error: error.message });
     }

@@ -9,7 +9,8 @@ import {
   summarize,
   validatePasswordPolicy
 } from '../server';
-import { normalizeDescription, parseJuneCashAdvances, parseJuneLedgerCsv, parseLkhLedgerCsv } from '../src/lib/lkhImport';
+import { normalizeDescription, parseJuneCashAdvances, parseJuneLedgerCsv, parseLkhCashAdvances, parseLkhLedgerCsv } from '../src/lib/lkhImport';
+import { validateCreateUserForm, validateKasbonForm, validateLedgerForm, validateLoginForm, validateProofFile } from '../src/lib/validation';
 
 describe('LKH parsing helpers', () => {
   it('validates the auth password policy', () => {
@@ -18,11 +19,39 @@ describe('LKH parsing helpers', () => {
     expect(validatePasswordPolicy('Password1')).toBeNull();
   });
 
+  it('returns field errors for shared form validators', () => {
+    expect(validateLoginForm({ username: 'Bad User', password: '' }).fieldErrors).toMatchObject({
+      username: 'Username harus 3-40 karakter dan hanya boleh huruf, angka, titik, underscore, atau strip.',
+      password: 'Password wajib diisi.'
+    });
+    expect(validateCreateUserForm({ username: 'reader', name: 'A', role: 'OWNER', password: 'password' }).fieldErrors).toMatchObject({
+      name: 'Nama pengguna harus 2-80 karakter.',
+      role: 'Role pengguna tidak valid.',
+      password: 'Password harus mengandung huruf dan angka.'
+    });
+    expect(validateLedgerForm({ date: '', description: '', categoryId: '', type: 'OTHER', amount: '0' }).fieldErrors).toMatchObject({
+      date: 'Tanggal transaksi wajib valid.',
+      description: 'Keterangan wajib diisi.',
+      categoryId: 'Kategori wajib dipilih.',
+      type: 'Tipe transaksi tidak valid.',
+      amount: 'Nominal harus lebih dari 0.'
+    });
+    expect(validateKasbonForm({ date: '2026-06-01', person: '', description: '', amount: '-1' }).fieldErrors).toMatchObject({
+      person: 'Nama wajib diisi.',
+      description: 'Keterangan wajib diisi.',
+      amount: 'Nominal kasbon harus lebih dari 0.'
+    });
+    expect(validateProofFile({ type: 'application/pdf', size: 1 }).fieldErrors).toMatchObject({
+      proof: 'Format bukti harus JPG, PNG, atau WebP.'
+    });
+  });
+
   it('parses Indonesian and spreadsheet money formats', () => {
     expect(parseAmount(10000)).toBe(10000);
     expect(parseAmount('10,000')).toBe(10000);
     expect(parseAmount('Rp 10.000')).toBe(10000);
     expect(parseAmount('  87,500.00 ')).toBe(87500);
+    expect(parseAmount('(86,915.00)')).toBe(-86915);
     expect(parseAmount('')).toBe(0);
     expect(parseAmount('abc')).toBe(0);
   });
@@ -55,29 +84,62 @@ describe('LKH calculations', () => {
     expect(ledger.map((entry) => entry.runningBalance)).toEqual([1500, 1250, 1150]);
   });
 
+  it('computes running balance even when imported rows provide spreadsheet balances', () => {
+    const ledger = computeLedger(month, [
+      { id: '1', date: '2026-06-01', createdAt: '2026-06-01T01:00:00.000Z', type: 'INCOME', amount: 500, spreadsheetBalance: 1750, category },
+      { id: '2', date: '2026-06-02', createdAt: '2026-06-02T02:00:00.000Z', type: 'EXPENSE', amount: 250, category },
+      { id: '3', date: '2026-06-03', createdAt: '2026-06-03T03:00:00.000Z', type: 'EXPENSE', amount: 100, spreadsheetBalance: 1200, category }
+    ]);
+    expect(ledger.map((entry) => entry.runningBalance)).toEqual([1500, 1250, 1150]);
+    expect(ledger[0].spreadsheetBalance).toBe(1750);
+  });
+
   it('summarizes totals, categories, daily values, and kasbon', () => {
-    const ledger = computeLedger(month, entries);
-    const summary = summarize(month, ledger, [{ status: 'UNPAID', amount: 400 }, { status: 'PAID', amount: 900 }]);
+    const reportedMonth = {
+      ...month,
+      reportedClosingBalance: 9999,
+      reportedCashAdvanceTotal: 8888,
+      reportedCashOnHand: 7777
+    };
+    const ledger = computeLedger(reportedMonth, entries);
+    const summary = summarize(reportedMonth, ledger, [{ status: 'UNPAID', amount: 400 }, { status: 'PAID', amount: 900 }]);
     expect(summary.totalIncome).toBe(500);
     expect(summary.totalExpense).toBe(350);
     expect(summary.closingBalance).toBe(1150);
     expect(summary.outstandingKasbon).toBe(400);
+    expect(summary.cashOnHand).toBe(750);
+    expect(summary.balanceSource).toBe('computed');
     expect(summary.byCategory).toEqual([{ name: 'transportasi', amount: 350 }]);
     expect(summary.byDay).toEqual([
       { date: '2026-06-01', income: 500, expense: 0 },
       { date: '2026-06-02', income: 0, expense: 350 }
     ]);
   });
+
+  it('summarizes dashboard totals from DB rows marked for dashboard inclusion', () => {
+    const ledger = computeLedger(month, [
+      { id: 'archive', date: '2026-06-01', createdAt: '2026-06-01T00:00:00.000Z', type: 'INCOME', amount: 999, category, dashboardIncluded: false },
+      { id: 'income', date: '2026-06-02', createdAt: '2026-06-02T00:00:00.000Z', type: 'INCOME', amount: 500, category, dashboardIncluded: true },
+      { id: 'discount', date: '2026-06-02', createdAt: '2026-06-02T01:00:00.000Z', type: 'EXPENSE', amount: -50, category, dashboardIncluded: true },
+      { id: 'expense', date: '2026-06-03', createdAt: '2026-06-03T00:00:00.000Z', type: 'EXPENSE', amount: 250, category, dashboardIncluded: true }
+    ]);
+    const summary = summarize(month, ledger, []);
+    expect(summary.ledgerCount).toBe(4);
+    expect(summary.dashboardLedgerCount).toBe(3);
+    expect(summary.totalIncome).toBe(500);
+    expect(summary.totalExpense).toBe(200);
+    expect(summary.byCategory).toEqual([{ name: 'transportasi', amount: 200 }]);
+  });
 });
 
 describe('LKH June CSV seed parser', () => {
   it('parses all available 2026 period CSV templates with period-specific cutoffs', () => {
     const cases = [
-      { month: 1, file: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv', openingBalance: 0, rows: 408, totalIncome: 32976972, totalExpense: 30161005, closingBalance: 2815967, warnings: [] },
-      { month: 2, file: 'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv', openingBalance: 34117, rows: 375, totalIncome: 35873500, totalExpense: 32166912, closingBalance: 3740705, warnings: [] },
-      { month: 3, file: 'LKH SKYNET PERIODE 2026 - MARET (1).csv', openingBalance: 683705, rows: 292, totalIncome: 29796200, totalExpense: 25810320, closingBalance: 4669585, warnings: [] },
-      { month: 4, file: 'LKH SKYNET PERIODE 2026 - APRIL (1).csv', openingBalance: 370000, rows: 393, totalIncome: 31620099, totalExpense: 24023869, closingBalance: 7966230, warnings: [] },
-      { month: 5, file: 'LKH SKYNET PERIODE 2026 - MEI (1).csv', openingBalance: 1570630, rows: 430, totalIncome: 35418130, totalExpense: 30235869, closingBalance: 6752891, warnings: [] }
+      { month: 1, file: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv', openingBalance: 0, rows: 408, dashboardRows: 221, totalIncome: 20713000, totalExpense: 17003383, closingBalance: 3709617, reportedCashAdvanceTotal: 3675500, reportedCashOnHand: 34117, warnings: [] },
+      { month: 2, file: 'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv', openingBalance: 34117, rows: 375, dashboardRows: 375, totalIncome: 35819000, totalExpense: 32112412, closingBalance: 3740705, reportedCashAdvanceTotal: 3057000, reportedCashOnHand: 683705, warnings: [] },
+      { month: 3, file: 'LKH SKYNET PERIODE 2026 - MARET (1).csv', openingBalance: 683705, rows: 292, dashboardRows: 292, totalIncome: 29749000, totalExpense: 25763120, closingBalance: 4669585, reportedCashAdvanceTotal: 4756500, reportedCashOnHand: -86915, warnings: [] },
+      { month: 4, file: 'LKH SKYNET PERIODE 2026 - APRIL (1).csv', openingBalance: 370000, rows: 393, dashboardRows: 393, totalIncome: 31561000, totalExpense: 23964770, closingBalance: 7966230, reportedCashAdvanceTotal: 6395600, reportedCashOnHand: 1570630, warnings: [] },
+      { month: 5, file: 'LKH SKYNET PERIODE 2026 - MEI (1).csv', openingBalance: 1570630, rows: 430, dashboardRows: 430, totalIncome: 35347630, totalExpense: 30165369, closingBalance: 6752891, reportedClosingBalance: 5182261, reportedCashAdvanceTotal: 3585500, reportedCashOnHand: 1596761, warnings: [] }
     ];
 
     for (const item of cases) {
@@ -85,9 +147,13 @@ describe('LKH June CSV seed parser', () => {
       const parsed = parseLkhLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate }, { year: 2026, month: item.month });
       expect(parsed.openingBalance).toBe(item.openingBalance);
       expect(parsed.rows.length).toBe(item.rows);
+      expect(parsed.rows.filter((row) => row.dashboardIncluded).length).toBe(item.dashboardRows);
       expect(parsed.totalIncome).toBe(item.totalIncome);
       expect(parsed.totalExpense).toBe(item.totalExpense);
       expect(parsed.closingBalance).toBe(item.closingBalance);
+      expect(parsed.reportedClosingBalance).toBe(item.reportedClosingBalance ?? item.closingBalance);
+      expect(parsed.reportedCashAdvanceTotal).toBe(item.reportedCashAdvanceTotal);
+      expect(parsed.reportedCashOnHand).toBe(item.reportedCashOnHand);
       expect(parsed.warnings).toEqual(item.warnings);
       expect(parsed.rows.some((row) => row.description.toLowerCase() === 'saldo awal')).toBe(false);
       expect(parsed.rows.some((row) => row.description.toLowerCase().includes('rincian kas bon'))).toBe(false);
@@ -99,9 +165,13 @@ describe('LKH June CSV seed parser', () => {
     const parsed = parseJuneLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate });
     expect(parsed.openingBalance).toBe(1596761);
     expect(parsed.rows.length).toBe(183);
-    expect(parsed.totalIncome).toBe(12816700);
-    expect(parsed.totalExpense).toBe(12266996);
+    expect(parsed.rows.filter((row) => row.dashboardIncluded).length).toBe(183);
+    expect(parsed.totalIncome).toBe(12800000);
+    expect(parsed.totalExpense).toBe(12250296);
     expect(parsed.closingBalance).toBe(2146465);
+    expect(parsed.reportedClosingBalance).toBe(2146465);
+    expect(parsed.reportedCashAdvanceTotal).toBe(2137000);
+    expect(parsed.reportedCashOnHand).toBe(9465);
     expect(parsed.stoppedAtLine).toBe(192);
     expect(parsed.warnings).toEqual(['Baris 186: nominal kosong, dilewati.']);
     expect(parsed.rows[0]).toMatchObject({
@@ -119,7 +189,7 @@ describe('LKH June CSV seed parser', () => {
     expect(slug('Dana Masuk')).toBe('dana-masuk');
   });
 
-  it('parses the June kasbon employee section', () => {
+  it('parses the June kasbon employee section without footer reconciliation rows', () => {
     const csv = fs.readFileSync('LKH SKYNET PERIODE 2026 - JUNI.csv', 'utf8');
     const advances = parseJuneCashAdvances(csv, { parseCsv, parseAmount, parseIndonesianDate });
     expect(advances).toEqual([
@@ -131,7 +201,24 @@ describe('LKH June CSV seed parser', () => {
         description: 'Bensin evalia sby; E-toll; Minuman snack; Makan siang; Parkir; Listrik',
         amount: 589900,
         status: 'UNPAID'
-      }
+      },
     ]);
+    expect(advances.reduce((sum, advance) => sum + advance.amount, 0)).toBe(589900);
+  });
+
+  it('parses monthly kasbon detail rows without adding footer reconciliation rows', () => {
+    const cases = [
+      { month: 1, file: 'LKH SKYNET PERIODE 2026 - JANUARI (1).csv', rows: 40, total: 3675500 },
+      { month: 5, file: 'LKH SKYNET PERIODE 2026 - MEI (1).csv', rows: 39, total: 3585500 }
+    ];
+
+    for (const item of cases) {
+      const csv = fs.readFileSync(item.file, 'utf8');
+      const advances = parseLkhCashAdvances(csv, { parseCsv, parseAmount, parseIndonesianDate }, { year: 2026, month: item.month });
+      expect(advances).toHaveLength(item.rows);
+      expect(advances.reduce((sum, advance) => sum + advance.amount, 0)).toBe(item.total);
+      expect(advances.every((advance) => advance.amount > 0)).toBe(true);
+      expect(advances.some((advance) => advance.person === 'Rekonsiliasi')).toBe(false);
+    }
   });
 });

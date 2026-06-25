@@ -33,6 +33,9 @@ async function main() {
     totalIncome: parsed.totalIncome,
     totalExpense: parsed.totalExpense,
     closingBalance: parsed.closingBalance,
+    reportedClosingBalance: parsed.reportedClosingBalance,
+    reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+    reportedCashOnHand: parsed.reportedCashOnHand,
     stoppedAtLine: parsed.stoppedAtLine,
     cashAdvances: cashAdvances.length,
     cashAdvanceTotal: cashAdvances.reduce((sum, item) => sum + item.amount, 0),
@@ -62,9 +65,17 @@ async function main() {
         month: 6,
         label: `${MONTH_NAMES[5]} 2026`,
         openingBalance: parsed.openingBalance,
+        reportedClosingBalance: parsed.reportedClosingBalance,
+        reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+        reportedCashOnHand: parsed.reportedCashOnHand,
         status: 'DRAFT'
       },
-      update: { openingBalance: parsed.openingBalance }
+      update: {
+        openingBalance: parsed.openingBalance,
+        reportedClosingBalance: parsed.reportedClosingBalance,
+        reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+        reportedCashOnHand: parsed.reportedCashOnHand
+      }
     });
 
     const categoryByKey = new Map<string, { id: string }>();
@@ -104,6 +115,9 @@ async function main() {
           categoryId: category.id,
           type: row.type,
           amount: row.amount,
+          spreadsheetBalance: row.balance || null,
+          dashboardIncluded: row.dashboardIncluded,
+          spreadsheetSection: row.sectionIndex,
           source: 'spreadsheet-seed'
         },
         update: {
@@ -113,6 +127,9 @@ async function main() {
           categoryId: category.id,
           type: row.type,
           amount: row.amount,
+          spreadsheetBalance: row.balance || null,
+          dashboardIncluded: row.dashboardIncluded,
+          spreadsheetSection: row.sectionIndex,
           source: 'spreadsheet-seed'
         }
       });
@@ -121,7 +138,6 @@ async function main() {
     await tx.ledgerEntry.deleteMany({
       where: {
         monthId,
-        source: 'spreadsheet-seed',
         id: { notIn: seenIds }
       }
     });
@@ -152,10 +168,10 @@ async function main() {
     await tx.cashAdvance.deleteMany({
       where: {
         monthId,
-        id: { startsWith: 'seed-kasbon-2026-06-', notIn: seenCashAdvanceIds }
+        id: { notIn: seenCashAdvanceIds }
       }
     });
-  });
+  }, { timeout: 30000 });
 
   console.log(`\nApplied ${parsed.rows.length} June ledger rows and ${cashAdvances.length} kasbon rows.`);
 }

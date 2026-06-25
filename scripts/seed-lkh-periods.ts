@@ -52,6 +52,9 @@ function printSummary(data: ReturnType<typeof readPeriod>) {
     totalIncome: parsed.totalIncome,
     totalExpense: parsed.totalExpense,
     closingBalance: parsed.closingBalance,
+    reportedClosingBalance: parsed.reportedClosingBalance,
+    reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+    reportedCashOnHand: parsed.reportedCashOnHand,
     stoppedAtLine: parsed.stoppedAtLine,
     cashAdvances: cashAdvances.length,
     cashAdvanceTotal: cashAdvances.reduce((sum, item) => sum + item.amount, 0),
@@ -83,9 +86,17 @@ async function applyPeriod(parsed: LkhImportResult, cashAdvances: ReturnType<typ
         month: parsed.month,
         label: `${MONTH_NAMES[parsed.month - 1]} ${parsed.year}`,
         openingBalance: parsed.openingBalance,
+        reportedClosingBalance: parsed.reportedClosingBalance,
+        reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+        reportedCashOnHand: parsed.reportedCashOnHand,
         status: 'DRAFT'
       },
-      update: { openingBalance: parsed.openingBalance }
+      update: {
+        openingBalance: parsed.openingBalance,
+        reportedClosingBalance: parsed.reportedClosingBalance,
+        reportedCashAdvanceTotal: parsed.reportedCashAdvanceTotal,
+        reportedCashOnHand: parsed.reportedCashOnHand
+      }
     });
 
     const categoryByKey = new Map<string, { id: string }>();
@@ -125,6 +136,9 @@ async function applyPeriod(parsed: LkhImportResult, cashAdvances: ReturnType<typ
           categoryId: category.id,
           type: row.type,
           amount: row.amount,
+          spreadsheetBalance: row.balance || null,
+          dashboardIncluded: row.dashboardIncluded,
+          spreadsheetSection: row.sectionIndex,
           source: 'spreadsheet-seed'
         },
         update: {
@@ -134,6 +148,9 @@ async function applyPeriod(parsed: LkhImportResult, cashAdvances: ReturnType<typ
           categoryId: category.id,
           type: row.type,
           amount: row.amount,
+          spreadsheetBalance: row.balance || null,
+          dashboardIncluded: row.dashboardIncluded,
+          spreadsheetSection: row.sectionIndex,
           source: 'spreadsheet-seed'
         }
       });
@@ -142,7 +159,6 @@ async function applyPeriod(parsed: LkhImportResult, cashAdvances: ReturnType<typ
     await tx.ledgerEntry.deleteMany({
       where: {
         monthId,
-        source: 'spreadsheet-seed',
         id: { notIn: seenIds }
       }
     });
@@ -173,10 +189,10 @@ async function applyPeriod(parsed: LkhImportResult, cashAdvances: ReturnType<typ
     await tx.cashAdvance.deleteMany({
       where: {
         monthId,
-        id: { startsWith: `seed-kasbon-${parsed.year}-${String(parsed.month).padStart(2, '0')}-`, notIn: seenCashAdvanceIds }
+        id: { notIn: seenCashAdvanceIds }
       }
     });
-  });
+  }, { timeout: 30000 });
 }
 
 async function main() {

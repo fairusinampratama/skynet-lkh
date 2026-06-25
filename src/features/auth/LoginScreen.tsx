@@ -2,14 +2,19 @@ import { useState } from 'react';
 import { CAlert, CButton, CCard, CCardBody, CFormInput, CInputGroup, CInputGroupText, CSpinner } from '@coreui/react';
 import { Lock, User } from 'lucide-react';
 import { useLkh } from '../../context/LkhContext';
+import { FieldErrors, validateLoginForm } from '../../lib/validation';
 
 export function LoginScreen() {
   const { busy, message, login, clearMessage } = useLkh();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const validation = validateLoginForm({ username, password });
+    setErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await login(username, password).catch(() => undefined);
   };
 
@@ -25,12 +30,14 @@ export function LoginScreen() {
           <form className="d-grid gap-3" onSubmit={submit}>
             <CInputGroup>
               <CInputGroupText><User size={16} /></CInputGroupText>
-              <CFormInput autoFocus value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Username" autoComplete="username" />
+              <CFormInput autoFocus value={username} invalid={Boolean(errors.username)} onChange={(event) => { setUsername(event.target.value); setErrors({ ...errors, username: '' }); }} placeholder="Username" autoComplete="username" />
             </CInputGroup>
+            {errors.username && <div className="invalid-feedback d-block">{errors.username}</div>}
             <CInputGroup>
               <CInputGroupText><Lock size={16} /></CInputGroupText>
-              <CFormInput type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" autoComplete="current-password" />
+              <CFormInput type="password" value={password} invalid={Boolean(errors.password)} onChange={(event) => { setPassword(event.target.value); setErrors({ ...errors, password: '' }); }} placeholder="Password" autoComplete="current-password" />
             </CInputGroup>
+            {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
             <CButton color="primary" type="submit" disabled={busy || !username || !password}>
               {busy && <CSpinner size="sm" className="me-2" />}
               Login

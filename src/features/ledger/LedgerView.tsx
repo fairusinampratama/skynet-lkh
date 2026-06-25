@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Filter, Plus, Table2, X } from 'lucide-react';
 import { PrimaryButton, MutedButton } from '../../components/ui/Button';
-import { SelectField, TextField } from '../../components/ui/Fields';
+import { FieldError, SelectField, TextField } from '../../components/ui/Fields';
 import { Panel } from '../../components/ui/Panel';
 import {
   CategoryPill,
@@ -16,6 +16,7 @@ import {
   TablePagination
 } from '../../components/ui/DataTable';
 import { rupiah } from '../../lib/format';
+import { FieldErrors, validateLedgerForm } from '../../lib/validation';
 import { Category, EntryType, LedgerEntry, LedgerFilters, LedgerMeta } from '../../types';
 
 type LedgerFormState = { date: string; proofNo: string; description: string; categoryId: string; type: EntryType; amount: string };
@@ -68,9 +69,21 @@ export function LedgerView({
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
 }) {
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const changeForm = (next: LedgerFormState) => {
+    setErrors({});
+    onChange(next);
+  };
+  const saveForm = () => {
+    const validation = validateLedgerForm(form);
+    setErrors(validation.fieldErrors);
+    if (!validation.valid) return;
+    onSave();
+  };
+
   return (
     <Panel title="Sirkulasi Harian" subtitle="Input dan monitor transaksi kas harian dengan saldo otomatis." icon={<Table2 size={18} />}>
-      <LedgerForm locked={locked} busy={busy} form={form} categories={entryCategories} onChange={onChange} onSave={onSave} />
+      <LedgerForm locked={locked} busy={busy} form={form} categories={entryCategories} errors={errors} onChange={changeForm} onSave={saveForm} />
       <LedgerFiltersBar
         filters={filters}
         categories={filterCategories}
@@ -99,6 +112,7 @@ function LedgerForm({
   busy,
   form,
   categories,
+  errors,
   onChange,
   onSave
 }: {
@@ -106,22 +120,38 @@ function LedgerForm({
   busy: boolean;
   form: LedgerFormState;
   categories: Category[];
+  errors: FieldErrors;
   onChange: (value: LedgerFormState) => void;
   onSave: () => void;
 }) {
   return (
     <div className="grid min-w-0 gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-slate-950/70 md:grid-cols-2 xl:grid-cols-[130px_110px_minmax(220px,1fr)_180px] 2xl:grid-cols-[130px_110px_minmax(180px,1fr)_180px_120px_145px_auto]">
-      <TextField disabled={locked} type="date" value={form.date} onChange={(e) => onChange({ ...form, date: e.target.value })} />
+      <div>
+        <TextField disabled={locked} type="date" value={form.date} onChange={(e) => onChange({ ...form, date: e.target.value })} />
+        <FieldError message={errors.date} />
+      </div>
       <TextField disabled={locked} placeholder="No bukti" value={form.proofNo} onChange={(e) => onChange({ ...form, proofNo: e.target.value })} />
-      <TextField disabled={locked} placeholder="Keterangan" value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
-      <SelectField disabled={locked} value={form.categoryId} onChange={(e) => onChange({ ...form, categoryId: e.target.value })}>
-        {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-      </SelectField>
-      <SelectField disabled={locked} value={form.type} onChange={(e) => onChange({ ...form, type: e.target.value as EntryType })}>
-        <option value="EXPENSE">Keluar</option>
-        <option value="INCOME">Masuk</option>
-      </SelectField>
-      <TextField disabled={locked} placeholder="Nominal" value={form.amount} onChange={(e) => onChange({ ...form, amount: e.target.value })} />
+      <div>
+        <TextField disabled={locked} placeholder="Keterangan" value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })} />
+        <FieldError message={errors.description} />
+      </div>
+      <div>
+        <SelectField disabled={locked} value={form.categoryId} onChange={(e) => onChange({ ...form, categoryId: e.target.value })}>
+          {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+        </SelectField>
+        <FieldError message={errors.categoryId} />
+      </div>
+      <div>
+        <SelectField disabled={locked} value={form.type} onChange={(e) => onChange({ ...form, type: e.target.value as EntryType })}>
+          <option value="EXPENSE">Keluar</option>
+          <option value="INCOME">Masuk</option>
+        </SelectField>
+        <FieldError message={errors.type} />
+      </div>
+      <div>
+        <TextField disabled={locked} placeholder="Nominal" value={form.amount} onChange={(e) => onChange({ ...form, amount: e.target.value })} />
+        <FieldError message={errors.amount} />
+      </div>
       <PrimaryButton disabled={locked || busy} onClick={onSave}>
         <Plus size={16} />
         Tambah
@@ -215,6 +245,7 @@ function LedgerBrowser({
 }) {
   const [editingId, setEditingId] = useState('');
   const [editForm, setEditForm] = useState<LedgerFormState | null>(null);
+  const [editErrors, setEditErrors] = useState<FieldErrors>({});
   const [preview, setPreview] = useState<LedgerEntry | null>(null);
 
   const startEdit = (entry: LedgerEntry) => {
@@ -228,17 +259,27 @@ function LedgerBrowser({
       type: entry.type,
       amount: String(entry.amount)
     });
+    setEditErrors({});
   };
 
   const cancelEdit = () => {
     setEditingId('');
     setEditForm(null);
+    setEditErrors({});
   };
 
   const saveEdit = async () => {
     if (!editingId || !editForm) return;
+    const validation = validateLedgerForm(editForm);
+    setEditErrors(validation.fieldErrors);
+    if (!validation.valid) return;
     await onUpdate(editingId, editForm);
     cancelEdit();
+  };
+
+  const changeEditForm = (form: LedgerFormState) => {
+    setEditForm(form);
+    setEditErrors({});
   };
 
   const confirmDelete = (entry: LedgerEntry) => {
@@ -271,9 +312,10 @@ function LedgerBrowser({
                 entry={entry}
                 categories={categories}
                 editForm={editingId === entry.id ? editForm : null}
+                editErrors={editingId === entry.id ? editErrors : {}}
                 locked={locked}
                 busy={busy}
-                onEditFormChange={setEditForm}
+                onEditFormChange={changeEditForm}
                 onStartEdit={startEdit}
                 onSaveEdit={saveEdit}
                 onCancelEdit={cancelEdit}
@@ -295,9 +337,10 @@ function LedgerBrowser({
             entry={entry}
             categories={categories}
             editForm={editingId === entry.id ? editForm : null}
+            editErrors={editingId === entry.id ? editErrors : {}}
             locked={locked}
             busy={busy}
-            onEditFormChange={setEditForm}
+            onEditFormChange={changeEditForm}
             onStartEdit={startEdit}
             onSaveEdit={saveEdit}
             onCancelEdit={cancelEdit}
@@ -320,6 +363,7 @@ function LedgerTableRow({
   entry,
   categories,
   editForm,
+  editErrors,
   locked,
   busy,
   onEditFormChange,
@@ -334,6 +378,7 @@ function LedgerTableRow({
   entry: LedgerEntry;
   categories: Category[];
   editForm: LedgerFormState | null;
+  editErrors: FieldErrors;
   locked: boolean;
   busy: boolean;
   onEditFormChange: (form: LedgerFormState) => void;
@@ -351,19 +396,22 @@ function LedgerTableRow({
   return (
     <tr className={`${isSynthetic ? 'bg-emerald-50/70 dark:bg-emerald-500/10' : 'bg-white dark:bg-slate-900'} transition hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5`}>
       <td className="px-3 py-2.5 align-top font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400">
-        {editForm ? <TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} /> : entry.date}
+        {editForm ? <><TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} /><FieldError message={editErrors.date} /></> : entry.date}
       </td>
       <td className="px-3 py-2.5 align-top font-mono text-[11px] font-black text-slate-600 dark:text-slate-300">
         {editForm ? <TextField value={editForm.proofNo} onChange={(e) => onEditFormChange({ ...editForm, proofNo: e.target.value })} /> : entry.proofNo || '-'}
       </td>
       <td className="break-words px-3 py-2.5 align-top font-semibold leading-snug">
-        {editForm ? <TextField value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} /> : entry.description}
+        {editForm ? <><TextField value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} /><FieldError message={editErrors.description} /></> : entry.description}
       </td>
       <td className="px-3 py-2.5 align-top">
         {editForm ? (
+          <>
           <SelectField value={editForm.categoryId} onChange={(e) => onEditFormChange({ ...editForm, categoryId: e.target.value })}>
             {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </SelectField>
+          <FieldError message={editErrors.categoryId} />
+          </>
         ) : <CategoryBadge entry={entry} />}
       </td>
       <td className="px-3 py-2.5 align-top text-right">
@@ -374,6 +422,7 @@ function LedgerTableRow({
               <option value="INCOME">Masuk</option>
             </SelectField>
             <TextField value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} />
+            <FieldError message={editErrors.type || editErrors.amount} />
           </div>
         ) : (
           <div className="flex flex-col items-end gap-0.5">
@@ -409,6 +458,7 @@ function LedgerMobileCard({
   entry,
   categories,
   editForm,
+  editErrors,
   locked,
   busy,
   onEditFormChange,
@@ -423,6 +473,7 @@ function LedgerMobileCard({
   entry: LedgerEntry;
   categories: Category[];
   editForm: LedgerFormState | null;
+  editErrors: FieldErrors;
   locked: boolean;
   busy: boolean;
   onEditFormChange: (form: LedgerFormState) => void;
@@ -440,11 +491,14 @@ function LedgerMobileCard({
       <div className="rounded-md border border-slate-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-slate-900">
         <div className="grid gap-2">
           <TextField type="date" value={editForm.date} onChange={(e) => onEditFormChange({ ...editForm, date: e.target.value })} />
+          <FieldError message={editErrors.date} />
           <TextField placeholder="No bukti" value={editForm.proofNo} onChange={(e) => onEditFormChange({ ...editForm, proofNo: e.target.value })} />
           <TextField placeholder="Keterangan" value={editForm.description} onChange={(e) => onEditFormChange({ ...editForm, description: e.target.value })} />
+          <FieldError message={editErrors.description} />
           <SelectField value={editForm.categoryId} onChange={(e) => onEditFormChange({ ...editForm, categoryId: e.target.value })}>
             {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </SelectField>
+          <FieldError message={editErrors.categoryId} />
           <div className="grid grid-cols-2 gap-2">
             <SelectField value={editForm.type} onChange={(e) => onEditFormChange({ ...editForm, type: e.target.value as EntryType })}>
               <option value="EXPENSE">Keluar</option>
@@ -452,6 +506,7 @@ function LedgerMobileCard({
             </SelectField>
             <TextField placeholder="Nominal" value={editForm.amount} onChange={(e) => onEditFormChange({ ...editForm, amount: e.target.value })} />
           </div>
+          <FieldError message={editErrors.type || editErrors.amount} />
         </div>
         <InlineEditActions busy={busy} onCancel={onCancelEdit} onSave={onSaveEdit} />
       </div>

@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { SelectField } from './Fields';
+import { validateProofFile } from '../../lib/validation';
 
 export type TableMeta = {
   page: number;
@@ -312,7 +313,11 @@ export function ProofCell({
 }) {
   const handleUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) onUpload(id, file);
+    if (file) {
+      const validation = validateProofFile(file);
+      if (!validation.valid) window.alert(validation.fieldErrors.proof);
+      else onUpload(id, file);
+    }
     event.target.value = '';
   };
 

@@ -13,6 +13,9 @@ model Month {
   year           Int
   month          Int
   openingBalance Decimal       @default(0) @map("opening_balance") @db.Decimal(14, 2)
+  reportedClosingBalance Decimal? @map("reported_closing_balance") @db.Decimal(14, 2)
+  reportedCashAdvanceTotal Decimal? @map("reported_cash_advance_total") @db.Decimal(14, 2)
+  reportedCashOnHand Decimal? @map("reported_cash_on_hand") @db.Decimal(14, 2)
   status         MonthStatus   @default(DRAFT)
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
@@ -45,6 +48,9 @@ model LedgerEntry {
   categoryId  String    @map("category_id")
   type        EntryType
   amount      Decimal   @db.Decimal(14, 2)
+  spreadsheetBalance Decimal? @map("spreadsheet_balance") @db.Decimal(14, 2)
+  dashboardIncluded Boolean @default(true) @map("dashboard_included")
+  spreadsheetSection Int? @map("spreadsheet_section")
   proofImagePath String? @map("proof_image_path")
   proofImageName String? @map("proof_image_name")
   proofImageMime String? @map("proof_image_mime")
