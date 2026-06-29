@@ -106,12 +106,18 @@ export interface Summary {
   dashboardLedgerCount?: number;
   totalIncome: number;
   totalExpense: number;
+  computedIncome?: number;
+  computedExpense?: number;
+  incomeSource?: 'spreadsheet' | 'computed';
+  expenseSource?: 'spreadsheet' | 'computed';
   closingBalance: number;
   computedClosingBalance?: number;
   balanceSource?: 'spreadsheet' | 'computed';
   cashOnHand?: number;
   reportedCashAdvanceTotal?: number | null;
   actualOutstandingKasbon?: number;
+  cashAdvanceSource?: 'spreadsheet' | 'computed';
+  cashOnHandSource?: 'spreadsheet' | 'computed';
   outstandingKasbon: number;
   outstandingKasbonCount: number;
   byCategory: Array<{ name: string; amount: number }>;

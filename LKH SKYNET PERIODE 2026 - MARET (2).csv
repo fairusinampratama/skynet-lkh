@@ -8,7 +8,7 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 02-maret,1,Dana Masuk Operasional,dana masuk,"2,527,000",,"3,210,705",,,ATK,"171,700",0
 02-maret,1,Bi untuk perawatan  kendaraan set fanbel ori N 2113 EFD tgl 02/03/2026,perawatan kendaraan ,,"200,000","3,010,705",,,Cicilan Motor,3982000,0
 02-maret,1,Bi BBM N 1124 IC tgl 01/03/2026 ltr 10.0 mangliawan                                    ,perjalanan bisnis,,"100,000","2,910,705",,,dana masuk,0,"28,249,000"
-02-maret,1,Bi BBM N 1124 IC tgl 02/03/2026 ltr 20.0 kortes                               ,perjalanan bisnis,,"200,000","2,710,705",,,diskon,"-47,200",0
+02-maret,1,Bi BBM N 1124 IC tgl 02/03/2026 ltr 20.0 kortes                               ,perjalanan bisnis,,"200,000","2,710,705",,,diskon,0,47200
 02-maret,1,Bi BBM DK 6912 AAW km 455023 tgl 02/03/2026 ltr 2.0 mangliawan                                    ,transportasi,,"20,000","2,690,705",,,fee,1650000,0
 02-maret,1,"Bi BBM N 2110 EFD km 414921 tgl 02/03/2026 ltr 1.0  pembangunan ODP,ODC bedali                              ",transportasi,,"10,000","2,680,705",,,gaji,"200,000",0
 02-maret,1,Bi BBM N 4559 EGM km 424399 tgl 02/03/2026 ltr 1.5 maintance temenggungan,transportasi,,"15,000","2,665,705",,,konsumsi,"222,800",0
@@ -22,13 +22,13 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 02-maret,1,Bi pembelian material tgl 02/03/2026- 1pcs 2f4e+adaptor @ 75.000,Material,,"75,000","2,138,705",,,ongkir,"91,850",0
 02-maret,1,Bi pembelian material tgl 02/03/2026- 5pcs modem f663nv9+ adaptor @ 125.000,Material,,"625,000","1,513,705",,,Perawatan Kendaraan,30000,0
 02-maret,1,Bi pembelian material tgl 02/03/2026- 1pcs modem xpon+ adaptor @ 130.000,Material,,"130,000","1,383,705",,,perawatan kendaraan ,"610,000",0
-02-maret,1,diskon pembelian,diskon,,"-5,000","1,388,705",,,perjalanan bisnis,"610,000",0
+02-maret,1,diskon pembelian,diskon,5000,,"1,388,705",,,perjalanan bisnis,"610,000",0
 03-maret,2,Bi BBM N 2110 EFD km 415278 tgl 02/03/2026 ltr 1.0  maintance lawang                         ,transportasi,,"15,000","1,373,705",,,pulsa,"133,880",0
 03-maret,2,Bi BBM N 2113 EFD km 49583 tgl 03/03/2026 ltr 1.5  maintance karang kunci                  ,transportasi,,"15,000","1,358,705",,,Rumah Tangga,"684,600",0
 03-maret,2,Bi BBM M 2369 AI km 49985 tgl 03/03/2026 ltr 2.0  sentul                ,transportasi,,"10,000","1,348,705",,,sampah,"25,000",0
 03-maret,2,Bi BBM N 3222 KK km 193259 tgl 03/03/2026 ltr 1.5 maintance lawang                ,transportasi,,"15,000","1,333,705",,,sewa,1500000,0
 03-maret,2,Bi BBM N 2418 YBI km0 tgl 03/03/2026 ltr 1.0  maintance bedali indah                  ,transportasi,,"10,000","1,323,705",,,transportasi,"2,830,990",0
-03-maret,2,Bi BBM N 2109 EFD km 455909 tgl 03/03/2026 ltr 1.0  maintance comboran           ,transportasi,,"10,000","1,313,705",,,Grand Total,"25,763,120","30,432,705"
+03-maret,2,Bi BBM N 2109 EFD km 455909 tgl 03/03/2026 ltr 1.0  maintance comboran           ,transportasi,,"10,000","1,313,705",,,Grand Total,"25,810,320","30,479,905"
 03-maret,2,Bi untuk operasional pak bara ke kepanjen tgl 03/03/2026,perjalanan bisnis,,"200,000","1,113,705",,,,,
 03-maret,2,Bi untuk pembelian pulsa pak bara tgl 03/03/2026,pulsa,,"29,880","1,083,825",,,,,
 03-maret,2,Bi untuk pembayaran fee CS. feby tgl 03/03/2026,gaji,,"200,000","883,825",,,,,
@@ -47,10 +47,10 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 04-maret,3,Bi untuk pembelian rumah tangga tgl 04/03/2026- 1pcs kresek merah@ 30.000,Rumah Tangga,,"30,000","2,207,925",,,,,
 05-maret,4,dana Masuk Operasional,,1500000,,"3,707,925",,,,,
 05-maret,4,Bi pembelian material tgl 05/03/2026- 1pcs CON PEN 12 @ 33.000,Material,,"33,000","3,674,925",,,,,
-05-maret,4,diskon pembelian,diskon,,"-1,100","3,676,025",,,,,
+05-maret,4,diskon pembelian,diskon,1100,,"3,676,025",,,,,
 05-maret,4,Bi pembelian material tgl 05/03/2026- 1pcs kabel 1c vezalink @ 580.000,Material,,"580,000","3,096,025",,,,,
 05-maret,4,Bi pembelian material tgl 05/03/2026- 5pcs modem f663nv9+adaptor @ 125.000,Material,,"625,000","2,471,025",,,,,
-05-maret,4,diskon pembelian,diskon,,"-10,000","2,481,025",,,,,
+05-maret,4,diskon pembelian,diskon,10000,,"2,481,025",,,,,
 05-maret,4,Bi pembelian material tgl 05/03/2026- 11pcs Ap 120 1 sisi A3 @ 30.000,Material,,"30,000","2,451,025",,,,,
 05-maret,4,"Bi BBM N 2110 EFD km 415840 tgl 05/03/2026 ltr 1.0  maintance randu telu,ardimulyo                       ",transportasi,,"10,000","2,441,025",,,,,
 05-maret,4,Bi BBM N 2113 EFD km 49610 tgl 05/03/2026 ltr 2.0 lawang                   ,transportasi,,"20,000","2,421,025",,,,,
@@ -74,7 +74,7 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 06-maret,5,Bi untuk pembelian rumah tangga tgl 06/03/2026- 2pcs lwk kopi murni @ 10.200,Rumah Tangga,,"20,400","1,873,525",,,,,
 06-maret,5,Bi untuk pembelian rumah tangga tgl 06/03/2026- 1pcs noe/c crml.mc @ 10.800,Rumah Tangga,,"10,800","1,862,725",,,,,
 06-maret,5,Bi untuk pembelian rumah tangga tgl 06/03/2026- 1pcs idm ktg plstk@ 300,Rumah Tangga,,300,"1,862,425",,,,,
-06-maret,5,diskon pembelian,diskon,,"-7,800","1,870,225",,,,,
+06-maret,5,diskon pembelian,diskon,7800,,"1,870,225",,,,,
 06-maret,5,Bi untuk pembayaran fee psb pelanggan tgl 06/03/2026,fee,,50000,"1,820,225",,,,,
 06-maret,5,Bi BBM N 2114 EFD km 386856 tgl 02/03/2026 ltr 2.0 maintance tutur  ,transportasi,,20000,"1,800,225",,,,,
 06-maret,5,Bi BBM N 2110 EFD km 616288 tgl 06/03/2026 ltr 1.0 maintance bedali       ,transportasi,,10000,"1,790,225",,,,,
@@ -92,7 +92,7 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 07-maret,6,Bi pembelian material tgl 07/03/2026- 4pcs modem f663nv9+ adaptor @ 125.000,Material,,"500,000","1,570,025",,,,,
 07-maret,6,Bi pembelian material tgl 07/03/2026- 5pcs solasi  @ 6.000,Material,,"30,000","1,540,025",,,,,
 07-maret,6,"Bi pembelian material tgl 07/03/2026- 8pcs patch core 1m,2m @ 5.000",Material,,"40,000","1,500,025",,,,,
-07-maret,6,diskon pembelian,diskon,,"-5,000","1,505,025",,,,,
+07-maret,6,diskon pembelian,diskon,5000,,"1,505,025",,,,,
 07-maret,6,Bi pembelian ATK tgl 07/02/2026- 4pcs materai @ 11.800,ATK,,"47,200","1,457,825",,,,,
 07-maret,6,"Bi BBM N 2114 EFD km 968712 tgl 28/02/2026 ltr 1.5 maintance malang,kunci, arjosari",transportasi,,"15,000","1,442,825",,,,,
 07-maret,6,Bi BBM N 1195 FV km 0 tgl 06/03/2026 ltr 15.0,transportasi,,"150,000","1,292,825",,,,,
@@ -125,7 +125,7 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 10-maret,8,Bi untuk pembelian rumah tangga tgl 10/03/2026- 1pcs ekonomi lq.sereh@ 9.500,Rumah Tangga,,9500,"1,732,085",,,,,
 10-maret,8,Bi untuk pembelian rumah tangga tgl 10/03/2026- 2pcs materai 10.000  @ 11.500,Rumah Tangga,,23000,"1,709,085",,,,,
 10-maret,8,Bi untuk pembelian rumah tangga tgl 10/03/2026- 1pcs idm ktg plstk  @ 300,Rumah Tangga,,300,"1,708,785",,,,,
-10-maret,8,diskon pembelian,diskon,,-8200,"1,716,985",,,,,
+10-maret,8,diskon pembelian,diskon,8200,,"1,716,985",,,,,
 10-maret,8,Bi untuk perawatan  kendaraan tambal ban N 2114 EFD tgl 09/03/2026,perawatan kendaraan ,,15000,"1,701,985",,,,,
 10-maret,8,Bi untuk perawatan  kendaraan tambal ban N 2114 EFD tgl 10/03/2026,perawatan kendaraan ,,15000,"1,686,985",,,,,
 10-maret,8,Bi BBM N 2113 EFD km 29889 tgl 08/03/2026 ltr 1.5 maintance lawang,transportasi,,15000,"1,671,985",,,,,
@@ -197,7 +197,7 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 17-maret,14,Bi pembelian material tgl 17/03/2026- 1pcs Sc to lc @ 40.000,Material,,40000,"2,054,025",,,,,
 17-maret,14,Bi pembelian material tgl 17/03/2026- 3pcs 2f4e + adaptor @ 75.000,Material,,225000,"1,829,025",,,,,
 17-maret,14,Bi pembelian material tgl 17/03/2026- 2pcs sleeve @ 30.000,Material,,30000,"1,799,025",,,,,
-17-maret,14,diskon pembelian,diskon,,-5000,"1,804,025",,,,,
+17-maret,14,diskon pembelian,diskon,5000,,"1,804,025",,,,,
 17-maret,14,Bi untuk pembelian rumah tangga tgl 17/03/2026- 2pcs neo /cf mchno @ 10.900,Rumah Tangga,,21800,"1,782,225",,,,,
 17-maret,14,Bi untuk pembelian rumah tangga tgl 17/03/2026- 1pcs gmp gula @ 17.500,Rumah Tangga,,17500,"1,764,725",,,,,
 17-maret,14,Bi untuk pembelian rumah tangga tgl 17/03/2026- 1pcs  neo crml.mc @ 10.800,Rumah Tangga,,10800,"1,753,925",,,,,
@@ -206,7 +206,7 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 17-maret,14,Bi untuk pembelian rumah tangga tgl 17/03/2026- 1pcs idm ct. bud baby  @ 5.000,Rumah Tangga,,5000,"1,711,225",,,,,
 17-maret,14,Bi untuk pembelian rumah tangga tgl 17/03/2026- 1pcs idm ct. buds rfl @ 5.000,Rumah Tangga,,5000,"1,706,225",,,,,
 17-maret,14,Bi untuk pembelian rumah tangga tgl 17/03/2026- 1pcs idm ktg plastik 1w @ 300,Rumah Tangga,,300,"1,705,925",,,,,
-17-maret,14,diskon pembelian,diskon,,-5100,"1,711,025",,,,,
+17-maret,14,diskon pembelian,diskon,5100,,"1,711,025",,,,,
 17-maret,14,Bi parkir N 2821 TEO Bank Mandiri Singosari tgl 17/03/2026,transportasi,,2000,"1,709,025",,,,,
 17-maret,14,Bi BBM N 2113 EFD tgl 17/03/2026 ltr 1.0  lawang,transportasi,,10000,"1,699,025",,,,,
 17-maret,14,Bi BBM N 2821 TEO km 402174 tgl 17/03/2026 ltr 2.5  kepanjen,transportasi,,25000,"1,674,025",,,,,
@@ -297,7 +297,8 @@ Tanggal,No.Bukti,Keterangan,Kategori, Penerimaan , Pengeluaran ,Saldo,,,Kategori
 31-maret,22,Bi pembelian material tgl 31/03/2026- 3pcs klem 6m @ 6.000,Material,,18000,"4,923,085",,,,,
 31-maret,22,Bi untuk konsumsi kantor tgl 31/03/2026,konsumsi kantor,,150000,"4,773,085",,,,,
 31-maret,22,Bi untuk pembelian listrik kantor randuagung idpel 513010051348 tgl 31/03/2026              ,Listrik Kantor,,103500,"4,669,585",,,,,
-,,,,"30,432,705","25,763,120","4,669,585",,,,,
+,,Bi dana pengembalian kasbone tgl 31/03/2026,lain-lain,456915,,"5,126,500",,,,,
+,,,,"30,936,820","25,810,320","5,126,500",,,,,
 ,,,,,,,,,,,
 ,,,,,,,,,,,
 ,,,,,,,,,,,
@@ -369,7 +370,7 @@ Tanggal,No.Bukti,,,,,,,,,,
 ,,,,,,,,,,,
 ,,,,,,,,,,,
 ,,,,,,,,,,,
-,,,,,"4,669,585",,,,,,
+,,,,,"5,126,500",,,,,,
 ,,,,,"  4,756,500.00 ",,,,,,
-,,Saldo Tunai                                                                                                                                                                 ,    ,,"  (86,915.00)",,,,,,
+,,Saldo Tunai                                                                                                                                                                 ,    ,,"  370,000.00 ",,,,,,
 ,, , ,   ,,,,,,,

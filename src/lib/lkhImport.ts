@@ -224,25 +224,28 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
       continue;
     }
 
-    const type: EntryType = income ? 'INCOME' : 'EXPENSE';
-    const amount = income || expense;
-    const categoryName = normalizeCategory(rawCategory, type);
     const description = normalizeDescription(rawDescription);
+    const baseId = `seed-lkh-${periodKey(profile.year, profile.month)}-${String(line).padStart(4, '0')}`;
+    const amounts: Array<{ type: EntryType; amount: number; id: string }> = [];
+    if (income) amounts.push({ type: 'INCOME', amount: income, id: baseId });
+    if (expense) amounts.push({ type: 'EXPENSE', amount: expense, id: income ? `${baseId}-expense` : baseId });
 
-    ledgerRows.push({
-      id: `seed-lkh-${periodKey(profile.year, profile.month)}-${String(line).padStart(4, '0')}`,
-      rowNumber: line,
-      date: currentDate,
-      proofNo: currentProof || null,
-      description,
-      rawDescription,
-      categoryName,
-      categoryKind: type === 'INCOME' ? 'INCOME' : 'EXPENSE',
-      type,
-      amount,
-      balance,
-      sectionIndex: currentSectionIndex,
-      dashboardIncluded: true
+    amounts.forEach(({ type, amount, id }, amountIndex) => {
+      ledgerRows.push({
+        id,
+        rowNumber: line,
+        date: currentDate,
+        proofNo: currentProof || null,
+        description,
+        rawDescription,
+        categoryName: normalizeCategory(rawCategory, type),
+        categoryKind: type === 'INCOME' ? 'INCOME' : 'EXPENSE',
+        type,
+        amount,
+        balance: amountIndex === amounts.length - 1 ? balance : 0,
+        sectionIndex: currentSectionIndex,
+        dashboardIncluded: true
+      });
     });
   }
 

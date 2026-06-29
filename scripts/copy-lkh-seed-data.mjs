@@ -3,10 +3,10 @@ import path from 'path';
 
 const sourceFiles = [
   'LKH SKYNET PERIODE 2026 - Copy of JANUARI.csv',
-  'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv',
-  'LKH SKYNET PERIODE 2026 - MARET (1).csv',
-  'LKH SKYNET PERIODE 2026 - APRIL (1).csv',
-  'LKH SKYNET PERIODE 2026 - MEI (1).csv',
+  'LKH SKYNET PERIODE 2026 - FEBRUARI (2).csv',
+  'LKH SKYNET PERIODE 2026 - MARET (2).csv',
+  'LKH SKYNET PERIODE 2026 - APRIL (2).csv',
+  'LKH SKYNET PERIODE 2026 - MEI (2).csv',
   'LKH SKYNET PERIODE 2026 - JUNI (3).csv'
 ];
 

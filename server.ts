@@ -201,15 +201,19 @@ export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
   const dashboardLedger = ledger;
   const computedIncome = dashboardLedger.filter((entry) => entry.type === "INCOME").reduce((sum, entry) => sum + entry.amount, 0);
   const computedExpense = dashboardLedger.filter((entry) => entry.type === "EXPENSE").reduce((sum, entry) => sum + entry.amount, 0);
-  const totalIncome = computedIncome;
+  const openingBalance = toNumber(month.openingBalance);
+  const totalIncome = openingBalance + computedIncome;
   const totalExpense = computedExpense;
-  const computedClosingBalance = toNumber(month.openingBalance) + computedIncome - computedExpense;
+  const computedClosingBalance = openingBalance + computedIncome - computedExpense;
+  const reportedClosingBalance = month.reportedClosingBalance === null || month.reportedClosingBalance === undefined ? null : toNumber(month.reportedClosingBalance);
   const reportedCashAdvanceTotal = month.reportedCashAdvanceTotal === null || month.reportedCashAdvanceTotal === undefined ? null : toNumber(month.reportedCashAdvanceTotal);
-  const closingBalance = computedClosingBalance;
+  const reportedCashOnHand = month.reportedCashOnHand === null || month.reportedCashOnHand === undefined ? null : toNumber(month.reportedCashOnHand);
+  const closingBalance = reportedClosingBalance ?? computedClosingBalance;
   const actualOutstandingKasbon = cashAdvances
     .filter((item) => item.status === "UNPAID")
     .reduce((sum, item) => sum + toNumber(item.amount), 0);
-  const outstandingKasbon = actualOutstandingKasbon;
+  const outstandingKasbon = reportedCashAdvanceTotal ?? actualOutstandingKasbon;
+  const cashOnHand = reportedCashOnHand ?? closingBalance - outstandingKasbon;
   const outstandingKasbonCount = cashAdvances.filter((item) => item.status === "UNPAID").length;
   const byCategory = new Map<string, number>();
   const byDay = new Map<string, { income: number; expense: number }>();
@@ -224,7 +228,7 @@ export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
     byDay.set(day, daily);
   }
   return {
-    openingBalance: toNumber(month.openingBalance),
+    openingBalance,
     ledgerCount: ledger.length,
     dashboardLedgerCount: dashboardLedger.length,
     totalIncome,
@@ -235,10 +239,12 @@ export function summarize(month: any, ledger: any[], cashAdvances: any[]) {
     expenseSource: "computed",
     closingBalance,
     computedClosingBalance,
-    balanceSource: "computed",
-    cashOnHand: closingBalance - outstandingKasbon,
+    balanceSource: reportedClosingBalance === null ? "computed" : "spreadsheet",
+    cashOnHand,
     reportedCashAdvanceTotal,
     actualOutstandingKasbon,
+    cashAdvanceSource: reportedCashAdvanceTotal === null ? "computed" : "spreadsheet",
+    cashOnHandSource: reportedCashOnHand === null ? "computed" : "spreadsheet",
     outstandingKasbon,
     outstandingKasbonCount,
     byCategory: [...byCategory.entries()].map(([name, amount]) => ({ name, amount })),
@@ -844,7 +850,22 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const validation = validatePeriodForm(req.body);
       if (!validation.valid) throwValidation(validation.fieldErrors);
-      const { year, month: monthNumber, openingBalance } = validation.values!;
+      const { year, month: monthNumber } = validation.values!;
+      let openingBalance = validation.values!.openingBalance;
+
+      const prevMonthNum = monthNumber === 1 ? 12 : monthNumber - 1;
+      const prevYear = monthNumber === 1 ? year - 1 : year;
+      const prevMonthId = `lkh-${prevYear}-${String(prevMonthNum).padStart(2, "0")}`;
+
+      try {
+        const prevSummary = await getMonthSummaryPayload(prevMonthId);
+        if (prevSummary && prevSummary.summary) {
+          openingBalance = prevSummary.summary.cashOnHand;
+        }
+      } catch (e) {
+        // Fallback to client-provided openingBalance if previous month doesn't exist
+      }
+
       const month = await db().month.upsert({
         where: { year_month: { year, month: monthNumber } },
         create: {
@@ -928,18 +949,24 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       const validation = validateLedgerForm(req.body);
       if (!validation.valid) throwValidation(validation.fieldErrors);
       const { date, proofNo, description, categoryId, type, amount } = validation.values!;
-      const entry = await db().ledgerEntry.create({
-        data: {
-          id: id("entry"),
-          monthId: req.params.monthId,
-          date: new Date(date),
-          proofNo: proofNo || null,
-          description,
-          categoryId,
-          type,
-          amount
-        }
-      });
+      const [entry] = await db().$transaction([
+        db().ledgerEntry.create({
+          data: {
+            id: id("entry"),
+            monthId: req.params.monthId,
+            date: new Date(date),
+            proofNo: proofNo || null,
+            description,
+            categoryId,
+            type,
+            amount
+          }
+        }),
+        db().month.update({
+          where: { id: req.params.monthId },
+          data: { reportedClosingBalance: null, reportedCashOnHand: null }
+        })
+      ]);
       res.json({ success: true, entry });
     } catch (error: any) {
       res.status(400).json(validationErrorPayload(error));
@@ -953,17 +980,23 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       const validation = validateLedgerForm(req.body);
       if (!validation.valid) throwValidation(validation.fieldErrors);
       const { date, proofNo, description, categoryId, type, amount } = validation.values!;
-      const entry = await db().ledgerEntry.update({
-        where: { id: req.params.entryId },
-        data: {
-          date: new Date(date),
-          proofNo: proofNo || null,
-          description,
-          categoryId,
-          type,
-          amount
-        }
-      });
+      const [entry] = await db().$transaction([
+        db().ledgerEntry.update({
+          where: { id: req.params.entryId },
+          data: {
+            date: new Date(date),
+            proofNo: proofNo || null,
+            description,
+            categoryId,
+            type,
+            amount
+          }
+        }),
+        db().month.update({
+          where: { id: existing.monthId },
+          data: { reportedClosingBalance: null, reportedCashOnHand: null }
+        })
+      ]);
       res.json({ success: true, entry });
     } catch (error: any) {
       res.status(400).json(validationErrorPayload(error));
@@ -974,7 +1007,13 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const existing = await db().ledgerEntry.findUnique({ where: { id: req.params.entryId }, include: { month: true } });
       if (!existing || existing.month.status !== "DRAFT") throw new Error("Transaksi tidak dapat dihapus.");
-      await db().ledgerEntry.delete({ where: { id: req.params.entryId } });
+      await db().$transaction([
+        db().ledgerEntry.delete({ where: { id: req.params.entryId } }),
+        db().month.update({
+          where: { id: existing.monthId },
+          data: { reportedClosingBalance: null, reportedCashOnHand: null }
+        })
+      ]);
       await removeProofFile(existing.proofImagePath);
       res.json({ success: true });
     } catch (error: any) {
@@ -1038,17 +1077,23 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       const validation = validateKasbonForm(req.body);
       if (!validation.valid) throwValidation(validation.fieldErrors);
       const { date, person, description, amount, status } = validation.values!;
-      const item = await db().cashAdvance.create({
-        data: {
-          id: id("kasbon"),
-          monthId: req.params.monthId,
-          date: new Date(date),
-          person,
-          description,
-          amount,
-          status
-        }
-      });
+      const [item] = await db().$transaction([
+        db().cashAdvance.create({
+          data: {
+            id: id("kasbon"),
+            monthId: req.params.monthId,
+            date: new Date(date),
+            person,
+            description,
+            amount,
+            status
+          }
+        }),
+        db().month.update({
+          where: { id: req.params.monthId },
+          data: { reportedCashAdvanceTotal: null, reportedCashOnHand: null }
+        })
+      ]);
       res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
     } catch (error: any) {
       res.status(400).json(validationErrorPayload(error));
@@ -1060,10 +1105,16 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       const existing = await db().cashAdvance.findUnique({ where: { id: req.params.cashAdvanceId }, include: { month: true } });
       if (!existing || existing.month.status !== "DRAFT") throw new Error("Kasbon tidak dapat diubah.");
       const status = validateCashAdvanceStatus(req.body.status);
-      const item = await db().cashAdvance.update({
-        where: { id: req.params.cashAdvanceId },
-        data: { status }
-      });
+      const [item] = await db().$transaction([
+        db().cashAdvance.update({
+          where: { id: req.params.cashAdvanceId },
+          data: { status }
+        }),
+        db().month.update({
+          where: { id: existing.monthId },
+          data: { reportedCashAdvanceTotal: null, reportedCashOnHand: null }
+        })
+      ]);
       res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
     } catch (error: any) {
       res.status(400).json(validationErrorPayload(error));
@@ -1077,16 +1128,22 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
       const validation = validateKasbonForm(req.body);
       if (!validation.valid) throwValidation(validation.fieldErrors);
       const { date, person, description, amount, status } = validation.values!;
-      const item = await db().cashAdvance.update({
-        where: { id: req.params.cashAdvanceId },
-        data: {
-          date: new Date(date),
-          person,
-          description,
-          amount,
-          status
-        }
-      });
+      const [item] = await db().$transaction([
+        db().cashAdvance.update({
+          where: { id: req.params.cashAdvanceId },
+          data: {
+            date: new Date(date),
+            person,
+            description,
+            amount,
+            status
+          }
+        }),
+        db().month.update({
+          where: { id: existing.monthId },
+          data: { reportedCashAdvanceTotal: null, reportedCashOnHand: null }
+        })
+      ]);
       res.json({ success: true, item: { ...item, date: dateOnly(item.date), amount: toNumber(item.amount), proofImageUrl: proofUrl(item) } });
     } catch (error: any) {
       res.status(400).json(validationErrorPayload(error));
@@ -1097,7 +1154,13 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
     try {
       const existing = await db().cashAdvance.findUnique({ where: { id: req.params.cashAdvanceId }, include: { month: true } });
       if (!existing || existing.month.status !== "DRAFT") throw new Error("Kasbon tidak dapat dihapus.");
-      await db().cashAdvance.delete({ where: { id: req.params.cashAdvanceId } });
+      await db().$transaction([
+        db().cashAdvance.delete({ where: { id: req.params.cashAdvanceId } }),
+        db().month.update({
+          where: { id: existing.monthId },
+          data: { reportedCashAdvanceTotal: null, reportedCashOnHand: null }
+        })
+      ]);
       await removeProofFile(existing.proofImagePath);
       res.json({ success: true });
     } catch (error: any) {
@@ -1186,7 +1249,7 @@ export async function createApp(options: { prisma?: PrismaClient; serveFrontend?
             });
             byNameKind.set(key, category);
           }
-          const entryId = `import-${req.params.monthId}-${String(row.rowNumber).padStart(4, "0")}`;
+          const entryId = row.id.replace(/^seed-/, "import-");
           seenIds.push(entryId);
           await tx.ledgerEntry.upsert({
             where: { id: entryId },

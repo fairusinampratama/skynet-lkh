@@ -143,7 +143,7 @@ export function AppHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
           <div className="d-flex flex-column gap-2 rounded border border-warning-subtle bg-warning bg-opacity-10 p-3 flex-md-row">
             <CInputGroup>
               <CInputGroupText>Saldo awal</CInputGroupText>
-              <CFormInput value={periodForm.openingBalance} invalid={Boolean(periodErrors.openingBalance || periodErrors.period)} onChange={(event) => { setOpeningBalance(event.target.value); setPeriodErrors({}); }} placeholder="0" />
+              <CFormInput value={periodForm.openingBalance} invalid={Boolean(periodErrors.openingBalance || periodErrors.period)} onChange={(event) => { setOpeningBalance(event.target.value); setPeriodErrors({}); }} placeholder="(Otomatis dari bulan sebelumnya jika ada)" />
             </CInputGroup>
             <CButton color="success" disabled={busy} onClick={submitCreateMonth} className="text-nowrap">
               <CIcon icon={cilPlus} className="me-2" />

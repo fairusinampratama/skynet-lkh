@@ -11,9 +11,9 @@ export function Dashboard({ summary, month, outstandingCount }: { summary: Summa
   return (
     <div className="grid min-w-0 gap-5">
       <section className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-        <MetricCard icon={<WalletCards size={19} />} label="Saldo Akhir" value={rupiah(summary.closingBalance)} detail="Dihitung otomatis dari transaksi" tone="emerald" />
-        <MetricCard icon={<BadgeDollarSign size={19} />} label="Saldo Tunai" value={rupiah(cashOnHand)} detail="Saldo akhir dikurangi kasbon aktif" tone="emerald" />
-        <MetricCard icon={<ArrowUpCircle size={19} />} label="Penerimaan" value={rupiah(summary.totalIncome)} detail="Transaksi masuk ledger" tone="blue" />
+        <MetricCard icon={<WalletCards size={19} />} label="Saldo Akhir" value={rupiah(summary.closingBalance)} detail={summary.balanceSource === 'spreadsheet' ? 'Sesuai laporan spreadsheet' : 'Dihitung otomatis dari transaksi'} tone="emerald" />
+        <MetricCard icon={<BadgeDollarSign size={19} />} label="Saldo Tunai" value={rupiah(cashOnHand)} detail={summary.cashOnHandSource === 'spreadsheet' ? 'Sesuai laporan spreadsheet' : 'Saldo akhir dikurangi kasbon aktif'} tone="emerald" />
+        <MetricCard icon={<ArrowUpCircle size={19} />} label="Penerimaan" value={rupiah(summary.totalIncome)} detail="Termasuk saldo awal periode" tone="blue" />
         <MetricCard icon={<ArrowDownCircle size={19} />} label="Pengeluaran" value={rupiah(summary.totalExpense)} detail={`${summary.ledgerCount} transaksi ledger`} tone="rose" />
         <MetricCard icon={<CircleDollarSign size={19} />} label="Kasbon Aktif" value={rupiah(summary.outstandingKasbon)} detail={`${outstandingCount} belum lunas`} tone="amber" />
       </section>

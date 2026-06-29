@@ -152,7 +152,7 @@ describe('LKH API and DB integration', () => {
     const res = await request(app).get(`/api/months/${month.id}`).expect(200);
     expect(res.body.ledger.map((entry: any) => entry.runningBalance)).toEqual([1000, 1500, 1250]);
     expect(res.body.ledger[0]).toMatchObject({ description: 'Saldo Awal', amount: 1000, runningBalance: 1000, synthetic: true });
-    expect(res.body.summary).toMatchObject({ ledgerCount: 2, totalIncome: 500, totalExpense: 250, closingBalance: 1250 });
+    expect(res.body.summary).toMatchObject({ ledgerCount: 2, totalIncome: 1500, computedIncome: 500, totalExpense: 250, closingBalance: 1250 });
   });
 
   it('returns month summary without the full ledger payload', async () => {
@@ -166,6 +166,41 @@ describe('LKH API and DB integration', () => {
     expect(res.body.ledger).toBeUndefined();
     expect(res.body.cashAdvances).toEqual([]);
     expect(res.body.summary).toMatchObject({ ledgerCount: 1, totalExpense: 250, closingBalance: 750 });
+  });
+
+  it('invalidates reported totals after manual financial changes', async () => {
+    const month = await createJune(1000);
+    const category = await bootstrapCategory('EXPENSE');
+    await prisma.month.update({
+      where: { id: month.id },
+      data: { reportedClosingBalance: 9000, reportedCashAdvanceTotal: 8000, reportedCashOnHand: 1000 }
+    });
+
+    await request(app).post(`/api/months/${month.id}/ledger`).send({
+      date: '2026-06-02',
+      description: 'Bi BBM',
+      categoryId: category.id,
+      type: 'EXPENSE',
+      amount: 250
+    }).expect(200);
+    let updated = await prisma.month.findUniqueOrThrow({ where: { id: month.id } });
+    expect(updated.reportedClosingBalance).toBeNull();
+    expect(updated.reportedCashAdvanceTotal?.toNumber()).toBe(8000);
+    expect(updated.reportedCashOnHand).toBeNull();
+
+    await prisma.month.update({
+      where: { id: month.id },
+      data: { reportedCashOnHand: 1000 }
+    });
+    await request(app).post(`/api/months/${month.id}/kasbon`).send({
+      date: '2026-06-02',
+      person: 'Dafa',
+      description: 'Kasbon BBM',
+      amount: 50000
+    }).expect(200);
+    updated = await prisma.month.findUniqueOrThrow({ where: { id: month.id } });
+    expect(updated.reportedCashAdvanceTotal).toBeNull();
+    expect(updated.reportedCashOnHand).toBeNull();
   });
 
   it('exports a formatted full month Excel workbook', async () => {
@@ -190,7 +225,7 @@ describe('LKH API and DB integration', () => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(res.body);
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Ringkasan', 'Sirkulasi Harian', 'Kasbon', 'Kategori']);
-    expect(workbook.getWorksheet('Ringkasan')?.getCell('B5').value).toBe(500);
+    expect(workbook.getWorksheet('Ringkasan')?.getCell('B5').value).toBe(1500);
     expect(workbook.getWorksheet('Ringkasan')?.getCell('B9').value).toBe(1150);
     expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('C2').value).toBe('Saldo Awal');
     expect(workbook.getWorksheet('Sirkulasi Harian')?.getCell('C3').value).toBe('Dana masuk operasional');
@@ -300,7 +335,7 @@ describe('LKH API and DB integration', () => {
     }).expect(200);
 
     const payload = await request(app).get(`/api/months/${month.id}`).expect(200);
-    expect(payload.body.summary).toMatchObject({ totalIncome: 500, totalExpense: 0, closingBalance: 1500 });
+    expect(payload.body.summary).toMatchObject({ totalIncome: 1500, computedIncome: 500, totalExpense: 0, closingBalance: 1500 });
     expect(payload.body.ledger[1]).toMatchObject({ date: '2026-06-03', proofNo: '3', description: 'Dana masuk koreksi', type: 'INCOME' });
   });
 
@@ -503,7 +538,7 @@ describe('LKH API and DB integration', () => {
     expect(res.body.imported).toBe(3);
     expect(res.body.kasbonImported).toBe(1);
     const payload = await request(app).get(`/api/months/${month.id}`).expect(200);
-    expect(payload.body.summary.totalIncome).toBe(2000000);
+    expect(payload.body.summary.totalIncome).toBe(3596761);
     expect(payload.body.summary.totalExpense).toBe(65000);
     expect(payload.body.summary.closingBalance).toBe(3531761);
     expect(payload.body.cashAdvances).toHaveLength(1);

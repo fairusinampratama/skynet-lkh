@@ -104,12 +104,17 @@ describe('LKH calculations', () => {
     };
     const ledger = computeLedger(reportedMonth, entries);
     const summary = summarize(reportedMonth, ledger, [{ status: 'UNPAID', amount: 400 }, { status: 'PAID', amount: 900 }]);
-    expect(summary.totalIncome).toBe(500);
+    expect(summary.totalIncome).toBe(1500);
     expect(summary.totalExpense).toBe(350);
-    expect(summary.closingBalance).toBe(1150);
-    expect(summary.outstandingKasbon).toBe(400);
-    expect(summary.cashOnHand).toBe(750);
-    expect(summary.balanceSource).toBe('computed');
+    expect(summary.computedIncome).toBe(500);
+    expect(summary.computedClosingBalance).toBe(1150);
+    expect(summary.closingBalance).toBe(9999);
+    expect(summary.actualOutstandingKasbon).toBe(400);
+    expect(summary.outstandingKasbon).toBe(8888);
+    expect(summary.cashOnHand).toBe(7777);
+    expect(summary.balanceSource).toBe('spreadsheet');
+    expect(summary.cashAdvanceSource).toBe('spreadsheet');
+    expect(summary.cashOnHandSource).toBe('spreadsheet');
     expect(summary.byCategory).toEqual([{ name: 'transportasi', amount: 350 }]);
     expect(summary.byDay).toEqual([
       { date: '2026-06-01', income: 500, expense: 0 },
@@ -127,8 +132,10 @@ describe('LKH calculations', () => {
     const summary = summarize(month, ledger, []);
     expect(summary.ledgerCount).toBe(4);
     expect(summary.dashboardLedgerCount).toBe(4);
-    expect(summary.totalIncome).toBe(1499);
+    expect(summary.totalIncome).toBe(2499);
     expect(summary.totalExpense).toBe(200);
+    expect(summary.closingBalance).toBe(2299);
+    expect(summary.balanceSource).toBe('computed');
     expect(summary.byCategory).toEqual([{ name: 'transportasi', amount: 200 }]);
   });
 });
@@ -151,6 +158,16 @@ describe('LKH June CSV seed parser', () => {
       expect(parsed.rows.some((row) => row.description.toLowerCase() === 'saldo awal')).toBe(false);
       expect(parsed.rows.some((row) => row.description.toLowerCase().includes('rincian kas bon'))).toBe(false);
     }
+  });
+
+  it('splits a spreadsheet row containing both income and expense', () => {
+    const profile = requireLkhPeriodProfile(2026, 5);
+    const csv = fs.readFileSync(profile.fileName, 'utf8');
+    const parsed = parseLkhLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate }, profile);
+    expect(parsed.rows.filter((row) => row.rowNumber === 225)).toMatchObject([
+      { id: 'seed-lkh-2026-05-0225', type: 'INCOME', amount: 1700, balance: 0 },
+      { id: 'seed-lkh-2026-05-0225-expense', type: 'EXPENSE', amount: -1700, balance: 3587380 }
+    ]);
   });
 
   it('fails clearly when a conversion profile does not exist', () => {
