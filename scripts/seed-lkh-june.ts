@@ -10,10 +10,12 @@ import {
   slug
 } from '../server';
 import { parseJuneCashAdvances, parseJuneLedgerCsv } from '../src/lib/lkhImport';
+import { requireLkhPeriodProfile } from '../src/lib/lkhProfiles';
 
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
-const csvPath = path.resolve(process.cwd(), 'LKH SKYNET PERIODE 2026 - JUNI.csv');
+const juneProfile = requireLkhPeriodProfile(2026, 6);
+const csvPath = path.resolve(process.cwd(), juneProfile.fileName);
 const prisma = new PrismaClient();
 const colors = ['#2563eb', '#0f766e', '#ca8a04', '#dc2626', '#f97316', '#eab308', '#0891b2', '#7c3aed', '#9333ea', '#059669', '#0284c7', '#64748b'];
 

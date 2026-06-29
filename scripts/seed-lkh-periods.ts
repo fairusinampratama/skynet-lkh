@@ -10,32 +10,24 @@ import {
   slug
 } from '../server';
 import { parseLkhCashAdvances, parseLkhLedgerCsv, type LkhImportResult } from '../src/lib/lkhImport';
-
-type Period = { year: number; month: number; fileName: string };
+import { LKH_PERIOD_PROFILES, lkhPeriodKey, type LkhPeriodProfile } from '../src/lib/lkhProfiles';
 
 const args = process.argv.slice(2);
 const apply = args.includes('--apply');
 const prisma = new PrismaClient();
 const colors = ['#2563eb', '#0f766e', '#ca8a04', '#dc2626', '#f97316', '#eab308', '#0891b2', '#7c3aed', '#9333ea', '#059669', '#0284c7', '#64748b'];
 
-const PERIOD_FILES: Period[] = [
-  { year: 2026, month: 1, fileName: 'LKH SKYNET PERIODE 2026 - Copy of JANUARI.csv' },
-  { year: 2026, month: 2, fileName: 'LKH SKYNET PERIODE 2026 - FEBRUARI (1).csv' },
-  { year: 2026, month: 3, fileName: 'LKH SKYNET PERIODE 2026 - MARET (1).csv' },
-  { year: 2026, month: 4, fileName: 'LKH SKYNET PERIODE 2026 - APRIL (1).csv' },
-  { year: 2026, month: 5, fileName: 'LKH SKYNET PERIODE 2026 - MEI (1).csv' },
-  { year: 2026, month: 6, fileName: 'LKH SKYNET PERIODE 2026 - JUNI.csv' }
-];
-
 function selectedPeriods() {
   const monthArg = args.find((arg) => arg.startsWith('--months='));
-  if (!monthArg) return PERIOD_FILES;
+  if (!monthArg) return LKH_PERIOD_PROFILES;
   const wanted = new Set(monthArg.replace('--months=', '').split(',').map((item) => item.trim()).filter(Boolean));
-  return PERIOD_FILES.filter((period) => wanted.has(`${period.year}-${String(period.month).padStart(2, '0')}`));
+  return LKH_PERIOD_PROFILES.filter((period) => wanted.has(lkhPeriodKey(period.year, period.month)));
 }
 
-function readPeriod(period: Period) {
-  const csvPath = path.resolve(process.cwd(), period.fileName);
+function readPeriod(period: LkhPeriodProfile) {
+  const rootCsvPath = path.resolve(process.cwd(), period.fileName);
+  const bundledCsvPath = path.resolve(process.cwd(), 'dist', 'lkh-seed-data', period.fileName);
+  const csvPath = fs.existsSync(rootCsvPath) ? rootCsvPath : bundledCsvPath;
   const csv = fs.readFileSync(csvPath, 'utf8');
   const parsed = parseLkhLedgerCsv(csv, { parseCsv, parseAmount, parseIndonesianDate }, period);
   const cashAdvances = parseLkhCashAdvances(csv, { parseCsv, parseAmount, parseIndonesianDate }, period);

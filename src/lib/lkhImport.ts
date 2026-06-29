@@ -1,4 +1,5 @@
 import type { CategoryKind, EntryType } from '../types';
+import { requireLkhPeriodProfile, type LkhPeriodProfile } from './lkhProfiles';
 
 export interface LkhImportRow {
   id: string;
@@ -50,14 +51,6 @@ type ParserTools = {
 export type LkhPeriodOptions = {
   year: number;
   month: number;
-};
-
-type PeriodProfile = {
-  openingBalanceFallback?: number;
-};
-
-const PERIOD_PROFILES: Record<string, PeriodProfile> = {
-  '2026-05': { openingBalanceFallback: 1570630 }
 };
 
 const PROTECTED_TERMS = ['BBM', 'ODP', 'ODC', 'ATK', 'COD', 'IDPEL', 'IKR', 'CS', 'RT', 'RW', 'PUPR', 'PGS', 'HTB'];
@@ -124,6 +117,11 @@ const titleCase = (value: string) => value
 const slug = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const periodKey = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
 
+function resolveProfile(options: LkhPeriodOptions | LkhPeriodProfile): LkhPeriodProfile {
+  if ('columns' in options) return options;
+  return requireLkhPeriodProfile(options.year, options.month);
+}
+
 export function normalizeCategory(value: string, type: EntryType) {
   const normalized = value.trim().replace(/\s+/g, ' ').toLowerCase();
   if (type === 'INCOME' && (!normalized || normalized === 'dana masuk')) return 'Dana Masuk';
@@ -143,12 +141,13 @@ export function normalizeDescription(value: string) {
   return description;
 }
 
-export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhPeriodOptions): LkhImportResult {
+export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhPeriodOptions | LkhPeriodProfile): LkhImportResult {
+  const profile = resolveProfile(options);
+  const columns = profile.columns;
   const rows = tools.parseCsv(csv);
-  const hasHeader = rows.some((row) => (row[0] || '').trim().toLowerCase() === 'tanggal' && (row[2] || '').trim().toLowerCase() === 'keterangan');
+  const hasHeader = rows.some((row) => (row[columns.date] || '').trim().toLowerCase() === 'tanggal' && (row[columns.description] || '').trim().toLowerCase() === 'keterangan');
   if (!hasHeader) throw new Error('Header Tanggal tidak ditemukan.');
 
-  const profile = PERIOD_PROFILES[periodKey(options.year, options.month)] || {};
   let openingBalance = 0;
   let currentDate = '';
   let currentProof = '';
@@ -158,18 +157,18 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
   let currentSectionIndex = 0;
   const warnings: string[] = [];
   const ledgerRows: LkhImportRow[] = [];
-  const reportedBalances = extractReportedBalances(rows, tools);
+  const reportedBalances = extractReportedBalances(rows, tools, profile);
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const line = i + 1;
-    const firstCell = (row[0] || '').trim().toLowerCase();
-    const rawDescription = (row[2] || '').trim().replace(/\s+/g, ' ');
+    const firstCell = (row[columns.date] || '').trim().toLowerCase();
+    const rawDescription = (row[columns.description] || '').trim().replace(/\s+/g, ' ');
     const descriptionLabel = rawDescription.toLowerCase().replace(/\s+/g, ' ');
-    const periodStartDate = parsePeriodStartDate(row[0] || '', tools, options.year);
+    const periodStartDate = parsePeriodStartDate(row[columns.date] || '', tools, profile.year);
     if (periodStartDate) nextSectionStartDate = periodStartDate;
 
-    if (firstCell === 'tanggal' && (row[2] || '').trim().toLowerCase() === 'keterangan') {
+    if (firstCell === 'tanggal' && (row[columns.description] || '').trim().toLowerCase() === 'keterangan') {
       inLedger = true;
       currentSectionIndex += 1;
       currentDate = nextSectionStartDate;
@@ -180,10 +179,7 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
     if (!inLedger) continue;
 
     if (
-      descriptionLabel === 'rincian kas bon' ||
-      descriptionLabel === 'kasbone karyawan' ||
-      descriptionLabel === 'kategori' ||
-      descriptionLabel === 'grand total'
+      profile.stopLabels.includes(descriptionLabel)
     ) {
       inLedger = false;
       stoppedAtLine = stoppedAtLine || line;
@@ -196,15 +192,15 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
       continue;
     }
 
-    const parsedDate = tools.parseIndonesianDate(row[0] || '', options.year);
+    const parsedDate = tools.parseIndonesianDate(row[columns.date] || '', profile.year);
     if (parsedDate) currentDate = parsedDate;
-    if ((row[1] || '').trim()) currentProof = row[1].trim();
+    if ((row[columns.proofNo] || '').trim()) currentProof = row[columns.proofNo].trim();
 
-    const rawCategory = (row[3] || '').trim();
-    const income = tools.parseAmount(row[4]);
-    const expense = tools.parseAmount(row[5]);
-    const balance = tools.parseAmount(row[6]);
-    const hasBalanceCell = Boolean((row[6] || '').trim());
+    const rawCategory = (row[columns.category] || '').trim();
+    const income = tools.parseAmount(row[columns.income]);
+    const expense = tools.parseAmount(row[columns.expense]);
+    const balance = tools.parseAmount(row[columns.balance]);
+    const hasBalanceCell = Boolean((row[columns.balance] || '').trim());
     const isAmountFooterRow = !rawDescription && !rawCategory && (income || expense || hasBalanceCell);
 
     if (isAmountFooterRow && ledgerRows.length > 0) {
@@ -234,7 +230,7 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
     const description = normalizeDescription(rawDescription);
 
     ledgerRows.push({
-      id: `seed-lkh-${periodKey(options.year, options.month)}-${String(line).padStart(4, '0')}`,
+      id: `seed-lkh-${periodKey(profile.year, profile.month)}-${String(line).padStart(4, '0')}`,
       rowNumber: line,
       date: currentDate,
       proofNo: currentProof || null,
@@ -260,8 +256,8 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
   const totalExpense = dashboardRows.filter((row) => row.type === 'EXPENSE').reduce((sum, row) => sum + row.amount, 0);
 
   return {
-    year: options.year,
-    month: options.month,
+    year: profile.year,
+    month: profile.month,
     openingBalance,
     rows: ledgerRows,
     totalIncome,
@@ -275,9 +271,19 @@ export function parseLkhLedgerCsv(csv: string, tools: ParserTools, options: LkhP
   };
 }
 
-function extractReportedBalances(rows: string[][], tools: ParserTools) {
-  const sidePanelBalances = extractSidePanelReportedBalances(rows, tools);
-  if (sidePanelBalances) return sidePanelBalances;
+function extractReportedBalances(rows: string[][], tools: ParserTools, profile: LkhPeriodProfile) {
+  if (profile.reportedBalanceMode !== 'footer') {
+    const sidePanelBalances = extractSidePanelReportedBalances(rows, tools);
+    if (sidePanelBalances) return sidePanelBalances;
+  }
+
+  if (profile.reportedBalanceMode === 'side-panel') {
+    return {
+      reportedClosingBalance: null,
+      reportedCashAdvanceTotal: null,
+      reportedCashOnHand: null
+    };
+  }
 
   for (let i = rows.length - 3; i >= 0; i--) {
     const closing = spreadsheetFooterAmount(rows[i], tools);
@@ -333,56 +339,61 @@ function footerLabel(row: string[] | undefined) {
   return (row?.[2] || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-export function parseLkhCashAdvances(csv: string, tools: ParserTools, options: LkhPeriodOptions): LkhCashAdvanceSeed[] {
+export function parseLkhCashAdvances(csv: string, tools: ParserTools, options: LkhPeriodOptions | LkhPeriodProfile): LkhCashAdvanceSeed[] {
+  const profile = resolveProfile(options);
   const rows = tools.parseCsv(csv);
   const employeeSectionIndex = rows.findIndex((row) => (row[2] || '').trim().toLowerCase().replace(/\s+/g, ' ') === 'kasbone karyawan');
   const detailedSectionIndexes = rows.flatMap((row, index) => (row[2] || '').trim().toLowerCase().replace(/\s+/g, ' ') === 'rincian kas bon' ? [index] : []);
   const advances: LkhCashAdvanceSeed[] = [];
 
-  advances.push(...parseSidePanelCashAdvances(rows, tools, options));
+  if (profile.cashAdvanceModes.includes('side-panel')) {
+    advances.push(...parseSidePanelCashAdvances(rows, tools, profile));
+  }
 
-  if (employeeSectionIndex >= 0) {
-    advances.push(...parseEmployeeCashAdvances(rows, employeeSectionIndex, tools, options));
+  if (profile.cashAdvanceModes.includes('employee') && employeeSectionIndex >= 0) {
+    advances.push(...parseEmployeeCashAdvances(rows, employeeSectionIndex, tools, profile));
   }
 
   const detailedSectionIndex = detailedSectionIndexes.at(-1) ?? -1;
-  for (let i = 0; i < rows.length; i++) {
-    if (i !== detailedSectionIndex) continue;
-    const label = (rows[i][2] || '').trim().toLowerCase().replace(/\s+/g, ' ');
-    if (label !== 'rincian kas bon') continue;
+  if (profile.cashAdvanceModes.includes('detailed')) {
+    for (let i = 0; i < rows.length; i++) {
+      if (i !== detailedSectionIndex) continue;
+      const label = (rows[i][2] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      if (label !== 'rincian kas bon') continue;
 
-    let currentDate = '';
-    for (let j = i + 1; j < rows.length; j++) {
-      const row = rows[j];
-      const line = j + 1;
-      const rowLabel = (row[2] || '').trim().toLowerCase().replace(/\s+/g, ' ');
-      if (rowLabel === 'rincian kas bon' || rowLabel === 'kasbone karyawan') break;
-      if ((row[0] || '').trim().toLowerCase() === 'tanggal') continue;
-      if ((row[0] || '').includes('Laporan Kas Harian')) break;
-      if (row.some((cell) => String(cell || '').trim().toLowerCase() === 'grand total')) break;
+      let currentDate = '';
+      for (let j = i + 1; j < rows.length; j++) {
+        const row = rows[j];
+        const line = j + 1;
+        const rowLabel = (row[2] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (rowLabel === 'rincian kas bon' || rowLabel === 'kasbone karyawan') break;
+        if ((row[0] || '').trim().toLowerCase() === 'tanggal') continue;
+        if ((row[0] || '').includes('Laporan Kas Harian')) break;
+        if (row.some((cell) => String(cell || '').trim().toLowerCase() === 'grand total')) break;
 
-      const date = tools.parseIndonesianDate(row[0] || '', options.year);
-      if (date) currentDate = date;
-      const description = (row[2] || '').trim().replace(/\s+/g, ' ');
-      const amount = tools.parseAmount(row[5] || row[4] || row[3]);
-      if (!description && !amount && !date) continue;
-      if (isCashAdvanceFooterLabel(description) || !amount || amount <= 0 || !description) continue;
+        const date = tools.parseIndonesianDate(row[0] || '', profile.year);
+        if (date) currentDate = date;
+        const description = (row[2] || '').trim().replace(/\s+/g, ' ');
+        const amount = tools.parseAmount(row[5] || row[4] || row[3]);
+        if (!description && !amount && !date) continue;
+        if (isCashAdvanceFooterLabel(description) || !amount || amount <= 0 || !description) continue;
 
-      const person = inferCashAdvancePerson(description);
-      advances.push({
-        id: `seed-kasbon-${periodKey(options.year, options.month)}-${String(line).padStart(4, '0')}`,
-        rowNumber: line,
-        date: currentDate || `${options.year}-${String(options.month).padStart(2, '0')}-01`,
-        person,
-        description: normalizeDescription(description),
-        amount,
-        status: 'UNPAID'
-      });
+        const person = inferCashAdvancePerson(description);
+        advances.push({
+          id: `seed-kasbon-${periodKey(profile.year, profile.month)}-${String(line).padStart(4, '0')}`,
+          rowNumber: line,
+          date: currentDate || `${profile.year}-${String(profile.month).padStart(2, '0')}-01`,
+          person,
+          description: normalizeDescription(description),
+          amount,
+          status: 'UNPAID'
+        });
+      }
     }
   }
 
-  if (!detailedSectionIndexes.length && employeeSectionIndex < 0) {
-    advances.push(...parseLooseCashAdvances(rows, tools, options));
+  if (profile.cashAdvanceModes.includes('loose-fallback') && !detailedSectionIndexes.length && employeeSectionIndex < 0) {
+    advances.push(...parseLooseCashAdvances(rows, tools, profile));
   }
 
   return advances;

@@ -22,7 +22,7 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,Bi untuk pembelian rumah tangga tgl 02/05/2026- 1pcs tropical myk@ 24.000,Rumah Tangga,,24000,"1,228,761"
 ,,Bi untuk pembelian rumah tangga tgl 02/05/2026- 1pcs ekonomi @ 9.900,Rumah Tangga,,9900,"1,218,861"
 ,,Bi untuk pembelian rumah tangga tgl 02/05/2026- 1pcs kp branding@ 200,Rumah Tangga,,200,"1,218,661"
-,,diskon pembelian,diskon,,-3400,"1,222,061"
+,,diskon pembelian,diskon,3400,,"1,222,061"
 ,,Bi untuk konsumsi kantor tgl 01/06/2026,konsumsi kantor,,150000,"1,072,061"
 ,,Bi pembelian ATK tgl 02/06/2026- 12pcs map L big @ 1.416,ATK,,16992,"1,055,069"
 ,,Bi pembelian ATK tgl 02/06/2026- 12pcs benefit bp @ 1.250,ATK,,15000,"1,040,069"
@@ -53,7 +53,7 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,Bi untuk pembelian rumah tangga tgl 04/05/2026- 1pcs neo/c mchcno@ 10.900,Rumah Tangga,,10900,"1,698,765"
 ,,Bi untuk pembelian rumah tangga tgl 04/05/2026- 1pcs idm ktg pllstk bsr@ 500,Rumah Tangga,,500,"1,698,265"
 ,,Bi untuk pembelian rumah tangga tgl 04/05/2026- 1pcs idm ktg plstk sdg@ 300,Rumah Tangga,,300,"1,697,965"
-,,diskon pembelian,diskon,,-4000,"1,701,965"
+,,diskon pembelian,diskon,4000,,"1,701,965"
 ,,Bi untuk konsumsi kantor tgl 04/06/2026,konsumsi kantor,,110000,"1,591,965"
 ,,Bi untuk konsumsi team rafli gadang  2 hari tgl 04/06/2026,sangu,,100000,"1,491,965"
 ,,Bi pembelian ATK tgl 04/06/2026- 20pcs sticker vynil @ 8.500,ATK,,172000,"1,319,965"
@@ -106,7 +106,7 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,Bi untuk pembelian rumah tangga tgl 09/05/2026- 1pcs pikopi mix @ 12.200,Rumah Tangga,,"12,200","-319,135"
 ,,Bi untuk pembelian rumah tangga tgl 09/05/2026- 1pcs luwak mrn @ 10.500,Rumah Tangga,,"10,500","-329,635"
 ,,Bi untuk pembelian rumah tangga tgl 09/05/2026- 1pcs kp branding @ 500,Rumah Tangga,,500,"-330,135"
-,,diskon pembelian,diskon,,"-5,700","-324,435"
+,,diskon pembelian,diskon,5700,,"-324,435"
 ,,Bi untuk konsumsi maintance mangliawan tgl 09/06/2026,konsumsi,,"5,000","-329,435"
 ,,Bi untuk pembelian listrik kantor randuagung idpel 513010051348 tgl 09/06/2026,Listrik Kantor,,"203,500","-532,935"
 ,,Bi untuk pembelian listrik server randuagung idpel 5130010486945 tgl 09/06/2026,Listrik Server,,"203,500","-736,435"
@@ -138,12 +138,12 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,Bi pembelian material tgl  11/06/2026- 2pcs modem gm220+adaptor @ 90.000,Material,,"180,000","4,827,065"
 ,,Bi pembelian material tgl  11/06/2026- 4pcs adaptor 5v @ 15.000,Material,,"60,000","4,767,065"
 ,,Bi pembelian material tgl  11/06/2026- 1pcs HIT LILY @ 37.900,Material,,"37,900","4,729,165"
-,,diskon pembelian,diskon,,"-1,000","4,730,165"
+,,diskon pembelian,diskon,1000,,"4,730,165"
 ,,Bi untuk konsumsi kantor tgl 11/06/2026,konsumsi kantor,,"112,500","4,617,665"
 ,,Bi untuk sangu pembangunan tim dafa bedali tgl 11/06/2026,sangu,,"50,000","4,567,665"
 ,,Bi untuk operasional meeting pak budi tgl 11/06/2026,perjalanan bisnis,,"200,000","4,367,665"
 12-juni,10,Bi pembelian material tgl  12/06/2026- 1pcs HIT LILY @ 19.200,Material,,"19,200","4,348,465"
-,,diskon pembelian,diskon,,"-1,000","4,349,465"
+,,diskon pembelian,diskon,1000,,"4,349,465"
 ,,Bi pembelian material tgl  12/06/2026- 2pcs klem paku no.6@ 5.000,Material,,"10,000","4,339,465"
 ,,Bi pembelian material tgl  12/06/2026- 2pcs klem paku no.8 @ 7.500,Material,,"15,000","4,324,465"
 ,,Bi pembelian material tgl  12/06/2026- 2pcs rj 45 @ 40.000,Material,,80000,"4,244,465"
@@ -152,7 +152,7 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,Bi untuk konsumsi kantor tgl 12/06/2026,konsumsi kantor,,"95,000","3,984,465"
 ,,Bi pembelian ATK tgl 12/06/2026- 3rim natural A4  @ 38.500,ATK,,"77,000","3,907,465"
 ,,Bi pembelian ATK tgl 12/06/2026- 1pcs cutter @ 3.700,ATK,,"3,700","3,903,765"
-,,diskon pembelian,diskon,,"-1,600","3,905,365"
+,,diskon pembelian,diskon,1600,,"3,905,365"
 ,,Bi untuk pembelian listrik kantor randuagung idpel 513010051348 tgl 12/06/2026,Listrik Kantor,,"203,500","3,701,865"
 ,,Bi BBM N 2668 GM km501949 tgl 11/06/2026 ltr 1.5 maintance randuagung,transportasi,,"15,000","3,686,865"
 ,,"Bi BBM N 6840 GE km 826362 tgl 12/06/2026 ltr 2.0 maintance bedali,randutelu,garuda",transportasi,,"20,000","3,666,865"
@@ -168,135 +168,188 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,Bi untuk konsumsi kantor tgl 13/06/2026,konsumsi kantor,,"150,000","3,351,865"
 ,,Bi untuk operasional meeting PGS surabaya tgl 05/06/2026,perjalanan bisnis,,"387,000","2,964,865"
 ,,Bi untuk pembelian rumah tangga tgl 13/05/2026- 1pcs scrln payung @ 65.900,Rumah Tangga,,"65,900","2,898,965"
-,,Bi pembelian material tgl  13/06/2026- 4pcs adapto 5v @ 15.000,Material,,"60,000",
-15-juni,12,Bi BBM N 2110  km 466998 tgl 14/06/2026 ltr 2.0  maintance pujon,transportasi,,"20,000",
+,,Bi pembelian material tgl  13/06/2026- 4pcs adapto 5v @ 15.000,Material,,"60,000","2,838,965"
+15-juni,12,Bi BBM N 2110  km 466998 tgl 14/06/2026 ltr 2.0  maintance pujon,transportasi,,"20,000","2,818,965"
 ,,"Bi BBM W 6853 ZN tgl 15/06/2026 ltr 1.5 lawang,singosari",transportasi,,"15,000","2,803,965"
-,,Bi untuk transportasi team teknisi tgl 14/06/2026,transportasi,,"40,000",
-,,Bi untik pembelian bensin janset tgl 15/06/2026,Material,,"18,000",
+,,Bi untuk transportasi tim teknisi tgl 14/06/2026,transportasi,,"40,000","2,763,965"
+,,Bi untik pembelian bensin janset tgl 15/06/2026,Material,,"18,000","2,745,965"
 ,,Bi untuk pembelian pulsa no NOC adimas 081331615537 tgl 15/06/2026,pulsa,,"50,000","2,695,965"
 ,,Bi untuk fee psb pelanggan baru tgl 15/06/2026,fee,,"25,000","2,670,965"
 ,,Bi untuk konsumsi maintance bobocabin pujon tgl 14/06/2026,konsumsi,,"30,000","2,640,965"
 ,,Bi untuk konsumsi kantor tgl 14/06/2026,konsumsi kantor,,"50,000","2,590,965"
 ,,Bi untuk konsumsi tamu tgl 15/06/2026,konsumsi tamu,,"66,000","2,524,965"
 ,,Bi untuk pembelian rumah tangga tgl 15/05/2026- 1pack cleo @ 24.000,Rumah Tangga,,"24,000","2,500,965"
-17-juni,13,dana masuk operasional,dana masuk,700000,,
+17-juni,13,dana masuk operasional,dana masuk,700000,,"3,200,965"
 ,,Bi untuk fee psb pelanggan baru tgl 17/06/2026,fee,,"25,000","3,175,965"
 ,,Bi untuk fee psb  CSR 3 sekolahan tgl 17/06/2026,fee,,"75,000","3,100,965"
 ,,Bi untuk perawatan  kendaraan service N 3346 ABF tgl 16/06/2026,perawatan kendaraan ,,"180,000","2,920,965"
-,,Bi BBM N 4235 FM tgl 15/06/2026 ltr 1.5 singosari,transportasi,,,
-,,Bi untuk transportasi pak bara tgl 17/06/2026,transportasi,,"20,000","2,900,965"
-,,Bi BBM L 1793 ACP  tgl 16/06/2026 ltr 10.0 ,transportasi,,"100,000",
-,,Bi untuk konsumsi kantor tgl 16/06/2026,konsumsi kantor,,"50,000","2,750,965"
-,,Bi untuk konsumsi kantor tgl 17/06/2026,konsumsi kantor,,"100,000","2,650,965"
-,,Bi untuk pembelian listrik server randuagung idpel 5130010486945 tgl 17/06/2026,Listrik Server,,"504,500","2,146,465"
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
-,,,,,,0
+,,Bi BBM N 4235 FM tgl 15/06/2026 ltr 1.5 singosari,transportasi,,"15,000","2,905,965"
+,,Bi untuk transportasi pak bara tgl 17/06/2026,transportasi,,"20,000","2,885,965"
+,,Bi BBM L 1793 ACP  tgl 16/06/2026 ltr 10.0 ,transportasi,,"100,000","2,785,965"
+,,Bi parkir N 2113 EFD Bank Mandiri Singosari tgl 17/06/2026,transportasi,,"2,000","2,783,965"
+,,Bi untuk konsumsi kantor tgl 16/06/2026,konsumsi kantor,,"50,000","2,733,965"
+,,Bi untuk konsumsi kantor tgl 17/06/2026,konsumsi kantor,,"100,000","2,633,965"
+,,Bi untuk pembelian listrik server randuagung idpel 5130010486945 tgl 17/06/2026,Listrik Server,,"504,500","2,129,465"
+,,Bi untuk pengiriman berkas ke PT. Alita Praya Mitra Jakarta tgl 17/06/2026,ongkir,,"12,900","2,116,565"
+18-juni,14,dana masuk operasional,dana masuk,1500000,,"3,616,565"
+,,Bi BBM N 2110  km 465776  tgl 12/06/2026 ltr 1.5  repair odp odc purwodadi,transportasi,,"15,000","3,601,565"
+,,Bi BBM N 2114  km 6478910  tgl 13/06/2026 ltr 1.5  maintance martopuro,transportasi,,"15,000","3,586,565"
+,,"Bi BBM N 2114  km 8267623  tgl 15/06/2026 ltr 1.5  maintance arjosari, srigading",transportasi,,"15,000","3,571,565"
+,,Bi BBM N 2114  km 443723  tgl 15/06/2026 ltr 2.0  ,transportasi,,"20,000","3,551,565"
+,,Bi BBM N 2114  km 344776  tgl 15/06/2026 ltr 1.0,transportasi,,"10,000","3,541,565"
+,,Bi BBM N 2109  km 843921 tgl 14/06/2026 ltr 2.0  ,transportasi,,"20,000","3,521,565"
+,,Bi BBM N 2668 GM km 502972  tgl 15/06/2026 ltr 1.2 maintance gadang,transportasi,,"20,000","3,501,565"
+,,Bi BBM N 2113 km 647484 tgl 16/06/2026 ltr 4.0,transportasi,,"40,000","3,461,565"
+,,"Bi BBM N 2114  km 427079 tgl 17/06/2026 ltr 2.0  maintance blimbingg ,martopuro",transportasi,,"20,000","3,441,565"
+,,Bi BBM N 3346 ABF km 729245 tgl 17/06/2026 ltr 2.0 maintance purwodadi                 ,transportasi,,"20,000","3,421,565"
+,,Bi parkir N 2114 EFD Bank Mandiri Singosari tgl 18/06/2026,transportasi,,"2,000","3,419,565"
+,,Bi BBM N 4235 FM tgl 18/06/2026 ltr 1.5 singosari,transportasi,,"15,000","3,404,565"
+,,Bi pembelian material tgl  13/06/2026- 1pcs modem +adapto @ 135.000,Material,,"135,000","3,269,565"
+,,Bi pembelian material tgl  15/06/2026- 1pcs modem GM220 +adapto @ 90.000,Material,,"90,000","3,179,565"
+,,Bi pembelian material tgl  18/06/2026- 1pcs eterlink a-b @ 95.000,Material,,"95,000","3,084,565"
+,,Bi untuk pengiriman material ke krian tgl 13/06/2026,ongkir,,"18,000","3,066,565"
+,,Bi untuk amplop pihak PLN tgl 17/06/2026,amplop,,"200,000","2,866,565"
+,,Bi untuk pengiriman berkas ke PT. Alita Praya Mitra Jakarta tgl 18/06/2026,ongkir,,"12,900","2,853,665"
+,,Bi untuk konsumsi tamu kuasa tgl 18/06/2026,konsumsi,,"25,000","2,828,665"
+19-juni,15,dana masuk operasional,dana masuk,2000000,,"4,828,665"
+,,Bi untuk fee psb pelanggan baru tgl 19/06/2026,fee,,"25,000","4,803,665"
+,,Bi BBM N 2668 GM km 502956  tgl 16/06/2026 ltr 2.5 maintance gadang,transportasi,,"25,000","4,778,665"
+,,"Bi BBM N 2668 GM km 502946 tgl 17/06/2026 ltr 2.0 maintance rest area, gadang",transportasi,,"20,000","4,758,665"
+,,Bi BBM N 2109 km 844102  tgl 17/06/2026 ltr 1.5 ,transportasi,,"15,000","4,743,665"
+,,"Bi BBM N 6840 GE km 88673623 tgl 18/06/2026 ltr 2.0 maintance srigading, gondang,garuda",transportasi,,"20,000","4,723,665"
+,,Bi BBM N 2114 km 520368 tgl 16/06/2026 ltr 1.5 maintance srigading,transportasi,,"15,000","4,708,665"
+,,"Bi BBM N 3457 ABF km 546902 tgl 19/06/2026 ltr 1.0 lawang ,singosari            ",transportasi,,"10,000","4,698,665"
+,,Bi parkir N 2114 EFD Bank Mandiri Singosari tgl 19/06/2026,transportasi,,"2,000","4,696,665"
+,,Bi untuk bensin janset tgl 19/06/2026,Material,,"36,000","4,660,665"
+,,Bi pembelian material tgl  08/06/2026- 10pcs modem gm220 +adaptor @ 90.000,Material,,900000,"3,760,665"
+,,diskon pembelian,diskon,25000,,"3,785,665"
+,,Bi pembelian material tgl  19/06/2026- 1pcs netlink gigabyte @ 135.000,Material,,135000,"3,650,665"
+,,Bi pembelian material tgl  19/06/2026- 1pcs xpon f609 postel+adaptor @ 170.000,Material,,170000,"3,480,665"
+,,Bi pembelian material tgl  19/06/2026- 7pcs nasional@ 7.000,Material,,49000,"3,431,665"
+,,Bi pembelian material tgl  19/06/2026- 2pcs klem no .6 @ 5.000,Material,,10000,"3,421,665"
+,,Bi pembelian material tgl  19/06/2026- 2pcs klem no.7 @ 6.000,Material,,12000,"3,409,665"
+,,Bi pembelian material tgl  19/06/2026- 2pcs klem no.8 @ 7.000,Material,,14000,"3,395,665"
+,,Bi pembelian material tgl  19/06/2026- 3pcs kabel tis  @ 16.000,Material,,48000,"3,347,665"
+,,Bi untuk konsumsi kantor tgl 19/06/2026,konsumsi kantor,,140000,"3,207,665"
+20-juni,16,dana masuk operasional,dana masuk,2000000,,"5,207,665"
+,,Bi untuk konsumsi kantor tgl 20/06/2026,konsumsi kantor,,"100,000","5,107,665"
+,,Bi BBM N 3457 ABF km 5067243 tgl 08/06/2026 ltr 1.5          ,transportasi,,"15,000","5,092,665"
+,,Bi BBM N 2109 km 746587 tgl 18/06/2026 ltr 1.0 maintance gadang ,transportasi,,"10,000","5,082,665"
+,,"Bi BBM N 2114 km 428665 tgl 18/06/2026 ltr 2.0 maintance blimbing,mangliawan",transportasi,,"20,000","5,062,665"
+,,"Bi BBM N 3457 ABF km 730245 tgl 18/06/2026 ltr 1.5 maintance lawang,srigading       ",transportasi,,"15,000","5,047,665"
+,,Bi BBM N 6840 GE km 3386434 tgl 19/06/2026 ltr 1.5 maintance kunci,transportasi,,"15,000","5,032,665"
+,,"Bi BBM N 3457 ABF km 731165 tgl 19/06/2026 ltr 1.5 maintance srigading,kalirejo",transportasi,,15000,"5,017,665"
+,,Bi BBM N 2113 km 5522526 tgl 19/06/2026 ltr 1.0 psb mangliawan,transportasi,,10000,"5,007,665"
+,,Bi parkir N 4064 EDL Pelangi Lawang tgl 20/06/2026,transportasi,,"2,000","5,005,665"
+,,Bi untuk fee pemasangan 7 pelanggan baru tgl 20/06/2026,fee,,175000,"4,830,665"
+,,Bi untuk fee sales gadang 10 pelanggan tgl 20/06/2026,fee,,500000,"4,330,665"
+,,Bi untuk pembelian rumah tangga tgl 20/05/2026- 6pcs oxy@ 12.000,Rumah Tangga,,"72,000","4,258,665"
+,,Bi pembelian material tgl  20/06/2026- 1pcs 2f4e pcb  @ 75.000,Material,,"75,000","4,183,665"
+,,Bi pembelian material tgl  20/06/2026- 1pcs netlink gigabyte @ 135.000,Material,,135000,"4,048,665"
+,,"Bi pembelian material tgl  20/06/2026- siku, paku  @ 35.000",Material,,35000,"4,013,665"
+,,Bi pembelian ATK tgl 20/06/2026- 12pcs binder clip v-tec no.107 @ .250,ATK,,"3,000","4,010,665"
+,,Bi pembelian ATK tgl 20/06/2026- 36pcs binder clip joyko 111@ 334,ATK,,"12,024","3,998,641"
+,,Bi untuk pembelian kartu perdana CS tgl 20/06/2026,ATK,,"30,000","3,968,641"
+22-JUNI,17,Bi pembelian material tgl  20/06/2026- 1pcs diagonal pliters @ 43.000,Material,,"43,000","3,925,641"
+,,Bi pembelian material tgl  22/06/2026- 1pcs netlink gigabyte @ 140.000,Material,,"140,000","3,785,641"
+,,Bi BBM N 2668 GM km 501466 tgl 20/06/2026 ltr 2.0 psb mangliawan,transportasi,,"20,000","3,765,641"
+,,Bi BBM N 6840 GE km 8968667 tgl 22/06/2026 ltr 1.5 maintance kunci,transportasi,,"15,000","3,750,641"
+,,Bi untuk fee psb 3 pelanggan baru tgl 22/06/2026,fee,,"75,000","3,675,641"
+,,Bi untuk fee 1 sales dan psb 1 pelanggan baru tgl 22/06/2026,fee,,"75,000","3,600,641"
+,,Bi untuk fee psb 5 pelanggan baru tgl 22/06/2026,fee,,"125,000","3,475,641"
+,,"Bi untuk sangu pembangunan ODP,ODC klampok tgl 22/06/2026",sangu,,"50,000","3,425,641"
+,,Bi untuk perawatan  kendaraan service N 2113 EFD tgl 22/06/2026,perawatan kendaraan ,,"210,000","3,215,641"
+23-juni,18,dana masuk operasional,dana masuk,1000000,,"4,215,641"
+,,Bi BBM N 2668 GM km 501942 tgl 21/06/2026 ltr 2.2 psb mangliawan,transportasi,,"22,000","4,193,641"
+,,Bi BBM N 2760 ABO km 55803 tgl 21/06/2026 ltr 1.5 maintance kertosari,transportasi,,"15,000","4,178,641"
+,,Bi BBM N 2113 km 553601 tgl 22/06/2026 ltr 2.0 psb mangliawan,transportasi,,"20,000","4,158,641"
+,,"Bi BBM N 2110 km 748437 tgl 22/06/2026 ltr 2.0 psb klampok ,tumapel",transportasi,,"20,000","4,138,641"
+,,Bi BBM N 2668 GM km 501952 tgl 22/06/2026 ltr 2.0 psb klampok,transportasi,,"20,000","4,118,641"
+,,Bi BBM N 4235 FM tgl 22/06/2026 ltr 1.5 singosari,transportasi,,"15,000","4,103,641"
+,,Bi untuk fee psb 3 pelanggan baru tgl 23/06/2026,fee,,75000,"4,028,641"
+,,Bi untuk pembelian rumah tangga tgl 22/05/2026- 1pcs sunlight jn @ 12.000,Rumah Tangga,,"12,000","4,016,641"
+,,Bi untuk pembelian rumah tangga tgl 22/05/2026- 1pcs soklin lav770ml  @ 13.400,Rumah Tangga,,"13,400","4,003,241"
+,,Bi untuk pembelian rumah tangga tgl 22/05/2026- 1pcs kp branding @ 200,Rumah Tangga,,200,"4,003,041"
+,,diskon pembelian,diskon,5400,,"4,008,441"
+,,Bi untuk pembelian rumah tangga tgl 23/05/2026- 1pcs kresek @ 14.000,Rumah Tangga,,"14,000","3,994,441"
+,,Bi untuk pembelian rumah tangga tgl 23/05/2026- 107pcs egg tray nps@ 686,Rumah Tangga,,"74,000","3,920,441"
+,,"Bi untuk konsumsi kantor 18,20,22,23 tgl 23/06/2026",konsumsi kantor,,"400,000","3,520,441"
+24-juni,19,dana masuk operasional,dana masuk,2000000,,"5,520,441"
+,,Bi BBM N 4235 FM tgl 24/06/2026 ltr 1.5 singosari,transportasi,,"15,000","5,505,441"
+,,Bi BBM N 2114 km 495369 tgl 23/06/2026 ltr 2.0 psb blimbing,transportasi,,"20,000","5,485,441"
+,,Bi BBM N 3457 ABF km 732692 tgl 22/06/2026 ltr 2.0 psb mangliawan      ,transportasi,,"20,000","5,465,441"
+,,"Bi BBM N 2110 km 6362487 tgl 23/06/2026 ltr 1.5 maintance lawang,bedali,gondang",transportasi,,"15,000","5,450,441"
+,,Bi BBM N 3457 ABF km 733356 tgl 23/06/2026 ltr 2.5 psb mangliawan    ,transportasi,,"25,000","5,425,441"
+,,Bi BBM L 1793 ACP  tgl 24/06/2026 ltr 10.0 ,transportasi,,"100,000","5,325,441"
+,,Bi BBM N 4064 EDL tgl 24/06/2026 ltr 1.0 lawang,transportasi,,"10,000","5,315,441"
+,,Bi parkir N 4064 EDL Bank Mandiri Lawang tgl 24/06/2026,transportasi,,"2,000","5,313,441"
+,,Bi untuk perawatan  kendaraan service N 2109 EFD tgl 23/06/2026,perawatan kendaraan ,,"21,000","5,292,441"
+,,Bi untuk pembelian rumah tangga tgl 24/05/2026- 1pcs idm ktg plastik @ 500,Rumah Tangga,,500,"5,291,941"
+,,Bi untuk pembelian rumah tangga tgl 24/05/2026- 1pcs gmp gula@ 17.500,Rumah Tangga,,"17,500","5,274,441"
+,,Bi untuk pembelian rumah tangga tgl 24/05/2026- 1pcs top coff gl.aren@ 13.500,Rumah Tangga,,"13,500","5,260,941"
+,,Bi untuk pembelian rumah tangga tgl 24/05/2026- 1pcs top coff mkachno@ 13.500,Rumah Tangga,,"13,500","5,247,441"
+,,Bi untuk pembelian rumah tangga tgl 24/05/2026- 1pcs neo/c crml.mc @ 10.800,Rumah Tangga,,"10,800","5,236,641"
+,,Bi untuk pembelian rumah tangga tgl 24/05/2026- 1pcs neo/c crml.mchno @ 10.900,Rumah Tangga,,"10,900","5,225,741"
+,,diskon pembelian,diskon,5400,,"5,231,141"
+,,Bi untuk fee psb 4 pelanggan baru tgl 24/06/2026,fee,,"100,000","5,131,141"
+,,Bi untuk pembayaran tagihan FIF no. 851000267823 angsr ke-31 tgl 24/06/2026,Cicilan Motor,,"788,000","4,343,141"
+,,Bi untuk sumbangan pembangunan musolah rw3 tgl 24/06/2026,lain-lain,,"500,000","3,843,141"
+25-juni,20,"Bi BBM N 2113 km 554366 tgl 24/06/2026 ltr 2.0 maintance bumiayu,mangliawan",transportasi,,"20,000","3,823,141"
+,,"Bi BBM N 2110 km 471079 tgl 24/06/2026 ltr 2.0 maintance gadang,bumiayu",transportasi,,"20,000","3,803,141"
+,,Bi BBM N 2109 km 567067 tgl 24/06/2026 ltr 1.0 maintance kalirejo,transportasi,,"10,000","3,793,141"
+,,Bi BBM EB 3024 km 93087 tgl 24/06/2026 ltr 1.0 maintance kalirejo,transportasi,,"10,000","3,783,141"
+,,Bi BBM N 2114  km 431967 tgl 24/06/2026 ltr 1.0 maintance kalirejo,transportasi,,"10,000","3,773,141"
+,,"Bi BBM N 3364 ABF km 733785 tgl 24/06/2026 ltr 1.5 maintance purwodadi,arjosari",transportasi,,"15,000","3,758,141"
+,,Bi BBM W 6853 ZN tgl 25/06/2026 ltr 1.5 maintance arjosari,transportasi,,"15,000","3,743,141"
+,,Bi BBM N 4064 EDL tgl 24/06/2026 ltr 2.0 mangliawan,transportasi,,"20,000","3,723,141"
+,,Bi parkir N 4064 EDL Bank Mandiri Sawojajar tgl 25/06/2026,transportasi,,"2,000","3,721,141"
+,,Bi pembelian ATK tgl 25/06/2026- 1pcs kertas stiker f4  @ 35.000,ATK,,"35,000","3,686,141"
+,,Bi untuk fee psb 1 pelanggan baru tgl 25/06/2026,fee,,"25,000","3,661,141"
+,,Bi untuk fee psb 3 pelanggan baru tgl 25/06/2026,fee,,"75,000","3,586,141"
+,,Bi untuk fee 1 sales dan 1 psb pelanggan baru tgl 25/06/2026,fee,,"75,000","3,511,141"
+,,Bi pembelian material tgl  25/06/2026- 1pcs spliter 1:16 @ 100.000,Material,,"100,000","3,411,141"
+,,Bi pembelian material tgl  25/06/2026- 5pcs solasi @ 7.000,Material,,"35,000","3,376,141"
+,,"Bi pembelian material tgl  25/06/2026- 4pcs kleam 5,6mm @ 10.000",Material,,"40,000","3,336,141"
+,,Bi untuk konsumsi kantor tgl 25/06/2026,konsumsi kantor,,"140,000","3,196,141"
+,,Bi untuk pembayaran tagihan FIF no. 851000267723 angsr ke-31 tgl 25/06/2026,Cicilan Motor,,"792,000","2,404,141"
+26-juni,21,Bi BBM L 1793 ACP  tgl 18/06/2026 ltr 5.0 ,transportasi,,"50,000","2,354,141"
+,,Bi BBM L 1793 ACP  tgl 21/06/2026 ltr 10.0,transportasi,,"100,000","2,254,141"
+,,Bi BBM L 1793 ACP  tgl 22/06/2026 ltr 10.0,transportasi,,"100,000","2,154,141"
+,,Bi BBM N 2668 GM km 5013962 tgl 24/06/2026 ltr 1.4 mangliawan,transportasi,,"14,200","2,139,941"
+,,Bi BBM N 2113 km 6677873 tgl 25/06/2026 ltr 2.0 maintance blimbing,transportasi,,"20,000","2,119,941"
+,,Bi BBM N 2109 km 524218 tgl 25/06/2026 ltr 1.0 migrasi kunci,transportasi,,"10,000","2,109,941"
+,,Bi BBM N 3346 ABF km 734195 tgl 25/06/2026 ltr 2.0 maintance lawang,transportasi,,"20,000","2,089,941"
+,,"Bi BBM N 2114  km 432490  tgl 25/06/2026 ltr 1.5 maintance randuagung,arjosari",transportasi,,"15,000","2,074,941"
+,,Bi BBM N 4298 ALX km 407022 tgl 25/06/2026 ltr 2.0 mangliawan,transportasi,,"20,000","2,054,941"
+,,Bi BBM DK 6912 AWW km 455023 tgl 25/06/2026 ltr 2.0 mangliawan,transportasi,,"20,000","2,034,941"
+,,Bi BBM N 2110 km 471685 tgl 25/06/2026 ltr 1.0 cek aset bedali,transportasi,,"10,000","2,024,941"
+,,Bi BBM L 1793 ACP  tgl 26/06/2026 ltr 10.0 ,transportasi,,"100,000","1,924,941"
+,,Bi pembelian material tgl  24/06/2026- 1pcs adaptor 12v @ 18.000,Material,,"18,000","1,906,941"
+,,Bi pembelian material tgl  24/06/2026- 1pcs adaptor 5v @ 15.000,Material,,"15,000","1,891,941"
+,,Bi untuk konsumsi kantor tgl 26/06/2026,konsumsi kantor,,"145,000","1,746,941"
+,,Bi untuk pembayaran tagihan FIF no. 851000265423 angsr ke-31 tgl 26/06/2026,Cicilan Motor,,"796,000","950,941"
+,,Bi pengembalian dana operasional oleh bu dida tgl 26/06/2026,lain-lain,,"189,000","761,941"
+27-juni,22,dana masuk operasional,dana masuk,3000000,,"3,761,941"
+,,dana masuk operasional,dana masuk,3000000,,"6,761,941"
+,,Bi BBM L 1793 ACP  tgl 26/06/2026 ltr 10.0 ,transportasi,,"100,000",
+,,Bi BBM N 2110 km472093 tgl 26/06/2026 ltr 1.0 migrasi kunci,transportasi,,"10,000","6,651,941"
+,,Bi BBM N 4235 FM tgl 25/06/2026 ltr 1.5 singosari,transportasi,,"15,000","6,636,941"
+,,Bi BBM N 4298 ACX km 407542  tgl 26/06/2026 ltr 1.5 maintance blimbing,transportasi,,"15,000","6,621,941"
+,,"Bi BBM N 3346 ABF km 735214 tgl 26/06/2026 ltr 1.5 maintance lawang, comboran",transportasi,,"15,000","6,606,941"
+,,Bi parkir N 2113 Bank Mandiri Singosari tgl 27/06/2026,transportasi,,"2,000",
+,,Bi pembayaran etol  ke surabaya tgl 27/06/2026,transportasi,,"103,000",
+,,Bi untuk pembelian rumah tangga tgl 27/05/2026- 3pcs kresek @ 14.000,Rumah Tangga,,"42,000","6,459,941"
+,,Bi pembelian material tgl  26/06/2026- 1pcs kuas @ 6.500,Material,,"6,500","6,453,441"
+,,Bi pembelian material tgl  26/06/2026- 1pcs baygon spry@ 45.900,Material,,"45,900","6,407,541"
+,,diskon pembelian,diskon,12400,,"6,419,941"
+,,Bi pembelian material tgl  27/06/2026- 1pcs DC dinalink kabel 1 mm@ 750.000,Material,,"750,000",
+,,Bi pembelian material tgl  27/06/2026- 1pcs hit lily @ 37.900,Material,,"37,900",
+,,diskon pembelian,diskon,1000,,
+,,Bi konsumsi lembur comboran tgl 26/06/2026,konsumsi,,54000,"5,579,041"
+,,Bi konsumsi survei olt ke surabaya tgl 26/06/2026,konsumsi,,99000,
+,,Bi sangu pembangunan ODP team tyo gadang tgl 26/06/2026,sangu,,50000,
+,,Bi untuk pembelian listrik kantor randuagung idpel 513010051348 tgl 02/05/2026,Listrik Kantor,,204500,"5,225,541"
+,,Bi untuk pembayaran tagihan FIF no. 851000265523 angsr ke-31 tgl 27/06/2026,Cicilan Motor,,799000,"4,426,541"
 ,,,,,,0
 ,,,,,,0
 ,,,,,,0
@@ -531,7 +584,7 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,,,,,
 ,,,,,,
 ,,,,,,
-,,,,"14,396,761","12,250,296","2,146,465"
+,,,,"28,962,661","24,536,120","4,426,541"
 ,,,,,,
 ,,,,,,
 ,,,,,,
@@ -540,17 +593,14 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,,,,,
 ,,,,,,
 ,,,,,,
-02- juni,,cod nia,,,"23,000",
-,,cod pak budi,,,"48,000",
+02- juni,,cod pak budi,,,"48,000",
 ,,rokok om joni,,,"100,000",
 ,,bensin mobil,,,"100,000",
 03-JUNI,,COD NOVEL,,,"35,000",
 ,,ROKOKPAK BUDI TGL2,,,"26,000",
 ,,ROKOK PAK BUDI,,,"47,000",
 05-juni,,rokok pak budi (nota),,,"47,000",
-,,COD NIA,,,98000,
 6-Jun-26,,bensin eceran evalia,,,"15,000",
-,,cod nia,,,"101,000",
 08-juni,,bu april bayar sekolah,,,10000,
 09-juni,,cod pak budi,,,"44,000",
 10-juni,,rokok pak budi,,,"46,000",
@@ -563,22 +613,38 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,ONGKIR PAKET NOVEL,,,"14,000",
 12-juni,,COD PAK BUDI OBAT,,,"93,000",
 ,,rokok pak budi,,,"47,000",
-13-juni,,"ROUTER AK + ONGKIR KRIAN REHAN (ongkir 18rb, AK 135, bensin 20, bensin 10)",,,"200,000",
-,,COD PAK BUDI OBAT,,,"96,000",
-15-JUNI,,COD NIA,,,"40,500",
-,,ROKOK PAK BUDI,,,"47,000",
-,,ROUTER AK MARTOPURO REHAN ,,,"150,000",
-,,bensin mbk riski,,,"15,000",
-17-juni,,bensin mobil bu april,,,"100,000",
-,,amplop pln,,,"200,000",
-,,bensin mobil,pel 17,"  100,000.00 ",,
+13-juni,,COD PAK BUDI OBAT,,,"96,000",
+15-JUNI,,ROKOK PAK BUDI,,,"47,000",
+17-juni,,bensin mobil,pel 17,"  100,000.00 ","  100,000.00 ",
+19-JUNI,,bu aril,,,"550,000",
+,,cod pak budi,,,"282,000",
+20-JUNI,,pak budi,,,"100,000",
+23-juni,,bu april beli es,,,"5,000",
+,,beli alteko,,,"10,000",
+,,endog mbk riski,,,"25,000",
+,,pak budi,,,"200,000",
+,,bensin evalia,,,"100,000",
+24-juni,,bensin pak bara,,,"20,000",
+26-juni,,cod pak budi tempat hardisk,pel 25,"  79,000.00 ","  79,000.00 ",
+,,cod ats,pel 26,"  389,000.00 ","  389,000.00 ",
+,,bensin a,pel 25,"  20,000.00 ","  20,000.00 ",
+,,pak budi,pel 26,"  100,000.00 ","  100,000.00 ",
+27-juni,,mbg,pel 26,"  100,000.00 ","  100,000.00 ",
+,,kleam tyo,pel 26,"  10,000.00 ","  10,000.00 ",
+,,keam dafa,pel 26,"  10,000.00 ","  10,000.00 ",
+,,uang hawwin susuk pelanggan 10rb + 17rb,,,,
+,,uang bu april kembalian pelanggan 34k,,,,
+,,pinjam bu april ,,,"875,000",
+,,cod nia,,,"53,000",
+,,FEE DAFA SALES+ PSB,,,"75,000",
+29-JUNI,,OP. KLAMPOK BU APRIL,PEL.29,"  50,000.00 ",,
 ,,,,,,
 ,,,,,,
 ,,,,,,
 ,,,,,,
-,,,,,"2,146,465",
-,,,,,"  2,137,000.00 ",
-,,,,,"  9,465.00 ",
+,,,,,"4,426,541",
+,,,,,"  4,312,500.00 ",
+,,,,,"  114,041.00 ",
 ,,,,,,
 ,,kasbone karyawan,,,,
 ,,,,,,
@@ -601,8 +667,16 @@ Tanggal,No.Bukti,Keterangan,, Jumlah ,,Saldo
 ,,parkir,18000,,,
 ,,pengembalian dana,,500000,,
 ,15/06,listrik ,51900,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,589900,500000,,
-,,,,89900,,
+,,bensin evalia ,50000,,,
+,,cod nia,,356500,,
+,,bensin ,100000,,,
+,,bu didamasuk,97500,,,
+,,PELUNASAN diberikan ke b dida,,83400,,
+,,dana masuk,2500,,,
+,,beli minyak -minyak,54000,,,
+,,op.pak budi batu,200000,,,
+,,etol,20000,,,
+,,bensin evalia,100000,,,
+,,cod nia,,53000,,
+,,,1213900,992900,,
+,,,,221000,,

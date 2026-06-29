@@ -62,6 +62,7 @@ npm run lint
 npm run test
 npm run build
 npm run seed:lkh:june
+npm run seed:lkh:periods
 ```
 
 For database-backed tests:
@@ -69,3 +70,30 @@ For database-backed tests:
 ```bash
 npm run test:db
 ```
+
+## Production Redeploy Notes
+
+Production is deployed through Coolify. Build output includes compiled seed runners and the Jan-Jun 2026 CSV seed files under `dist/lkh-seed-data`.
+
+Before reseeding production, create a PostgreSQL backup under `/home/hosting/backup/skynet-lkh/`.
+
+Recommended production sequence after Coolify redeploy:
+
+```bash
+npm run db:migrate
+npm run seed:auth:prod
+npm run seed:lkh:periods:prod
+```
+
+`seed:lkh:periods:prod` applies the corrected Jan-Jun 2026 source-of-truth CSV profiles and replaces existing seeded ledger/kasbon rows for those months.
+
+Expected Jan-Jun verification:
+
+| Month | Penerimaan | Pengeluaran | Saldo Akhir | Kasbon | Saldo Tunai |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Jan | 35,092,622 | 30,161,005 | 4,931,617 | 4,897,500 | 34,117 |
+| Feb | 35,819,000 | 32,112,412 | 3,740,705 | 3,057,000 | 683,705 |
+| Mar | 29,749,000 | 25,763,120 | 4,669,585 | 4,756,500 | -86,915 |
+| Apr | 31,561,000 | 23,964,770 | 7,966,230 | 6,395,600 | 1,570,630 |
+| May | 35,347,630 | 30,165,369 | 5,182,261 | 3,585,500 | 1,596,761 |
+| Jun | 27,365,900 | 24,536,120 | 4,426,541 | 4,312,500 | 114,041 |
